@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import { Toaster } from 'react-hot-toast';
 
 function PrivateRoute({ children }) {
   const { token } = useAuth();
@@ -28,6 +29,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Toaster position="top-right" />
         <AppRoutes />
       </BrowserRouter>
     </AuthProvider>

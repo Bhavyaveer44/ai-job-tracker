@@ -106,7 +106,7 @@ export default function JobCard({ job, onDelete, onUpdate }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
               <h3 style={{ margin: 0 }}>Edit job</h3>
               <button onClick={() => setShowEdit(false)}
-                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>×</button>
+                style={{ background: 'none', border: 'none',color: '#9ca3af', fontSize: 20, cursor: 'pointer' }}>×</button>
             </div>
 
             <form onSubmit={handleSave}>

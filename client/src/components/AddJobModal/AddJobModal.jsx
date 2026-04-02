@@ -64,7 +64,7 @@ export default function AddJobModal({ onClose, onJobAdded }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
           <h3 style={{ margin: 0 }}>Add new job</h3>
           <button onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>×</button>
+            style={{ background: 'none', border: 'none',color: '#9ca3af', fontSize: 20, cursor: 'pointer' }}>×</button>
         </div>
 
         {/* AI Parser section */}

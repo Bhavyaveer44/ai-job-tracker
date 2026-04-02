@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import toast from 'react-hot-toast';
 import { getJobs, updateJob } from '../../api/jobs';
 import JobCard from '../JobCard/JobCard';
 import AddJobModal from '../AddJobModal/AddJobModal';
@@ -19,56 +20,93 @@ export default function Board() {
   useEffect(() => {
     getJobs()
       .then(setJobs)
+      .catch(() => toast.error('Failed to load jobs'))
       .finally(() => setLoading(false));
   }, []);
 
   const onDragEnd = async (result) => {
-    const { draggableId, destination } = result;
+    const { draggableId, destination, source } = result;
     if (!destination) return;
+    if (destination.droppableId === source.droppableId) return;
 
     const newStatus = destination.droppableId;
 
-    // optimistic update — update UI immediately, then sync to backend
     setJobs(prev =>
       prev.map(j => j.id === draggableId ? { ...j, status: newStatus } : j)
     );
 
-    await updateJob(draggableId, { status: newStatus });
+    try {
+      await updateJob(draggableId, { status: newStatus });
+      toast.success(`Moved to ${newStatus}`);
+    } catch {
+      toast.error('Failed to update status');
+      setJobs(prev =>
+        prev.map(j => j.id === draggableId ? { ...j, status: source.droppableId } : j)
+      );
+    }
   };
 
-  const handleJobAdded = (newJob) => setJobs(prev => [newJob, ...prev]);
+  const handleJobAdded = (newJob) => {
+    setJobs(prev => [newJob, ...prev]);
+    toast.success('Job added');
+  };
+
+  const handleJobDeleted = (id) => {
+    setJobs(prev => prev.filter(j => j.id !== id));
+    toast.success('Job deleted');
+  };
 
   const handleJobUpdated = (updatedJob) => {
     setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
+    toast.success('Job updated');
   };
 
-  const handleJobDeleted = (id) => setJobs(prev => prev.filter(j => j.id !== id));
+  // stats
+  const total = jobs.length;
+  const interviews = jobs.filter(j => j.status === 'interview').length;
+  const offers = jobs.filter(j => j.status === 'offer').length;
+  const interviewRate = total > 0 ? Math.round((interviews / total) * 100) : 0;
 
-  if (loading) return <p style={{ padding: 24 }}>Loading...</p>;
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+      <p style={{ color: '#6b7280' }}>Loading your jobs...</p>
+    </div>
+  );
 
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <div style={{ display: 'flex', gap: 24 }}>
-          {COLUMNS.map(col => (
-            <div key={col.id} style={{ fontSize: 13, color: '#6b7280' }}>
-              <span style={{ fontWeight: 600, color: col.color }}>
-                {jobs.filter(j => j.status === col.id).length}
-              </span>
-              {' '}{col.label}
-            </div>
-          ))}
-        </div>
+
+      {/* Stats bar */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+        {[
+          { label: 'Total applied', value: total, color: '#2563eb' },
+          { label: 'Interviews', value: interviews, color: '#d97706' },
+          { label: 'Interview rate', value: `${interviewRate}%`, color: '#7c3aed' },
+          { label: 'Offers', value: offers, color: '#16a34a' },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{
+            background: 'white', borderRadius: 10, padding: '14px 18px',
+            border: '1px solid #e5e7eb'
+          }}>
+            <p style={{ margin: '0 0 4px', fontSize: 12, color: '#6b7280' }}>{label}</p>
+            <p style={{ margin: 0, fontSize: 24, fontWeight: 600, color }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Board header */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
         <button
           onClick={() => setShowModal(true)}
           style={{
-            padding: '8px 16px', background: '#2563eb', color: 'white',
+            padding: '8px 18px', background: '#2563eb', color: 'white',
             border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 500
           }}>
           + Add job
         </button>
       </div>
 
+      {/* Kanban columns */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           {COLUMNS.map(col => (
@@ -91,6 +129,14 @@ export default function Board() {
                       background: snapshot.isDraggingOver ? '#eff6ff' : 'transparent',
                       borderRadius: 8, transition: 'background 0.2s', padding: 4
                     }}>
+                    {jobs.filter(j => j.status === col.id).length === 0 && (
+                      <div style={{
+                        textAlign: 'center', padding: '40px 0',
+                        color: '#d1d5db', fontSize: 13
+                      }}>
+                        No jobs here
+                      </div>
+                    )}
                     {jobs
                       .filter(j => j.status === col.id)
                       .map((job, index) => (
