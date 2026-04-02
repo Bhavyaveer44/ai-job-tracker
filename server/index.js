@@ -15,6 +15,9 @@ app.use('/api/auth', authRoutes);
 const jobRoutes = require('./routes/jobs');
 app.use('/api/jobs', jobRoutes);
 
+const aiRoutes = require('./routes/ai');
+app.use('/api/ai', aiRoutes);
+
 //3.HEALTH CHECK/BASE ROUTE
 app.get('/', (req, res) => res.send('Server is running'));
 
