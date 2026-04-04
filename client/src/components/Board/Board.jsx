@@ -7,9 +7,9 @@ import AddJobModal from '../AddJobModal/AddJobModal';
 
 const COLUMNS = [
   { id: 'applied',   label: 'Applied',   color: '#2563eb' },
+  { id: 'rejected',  label: 'Rejected',  color: '#dc2626' },
   { id: 'interview', label: 'Interview', color: '#d97706' },
   { id: 'offer',     label: 'Offer',     color: '#16a34a' },
-  { id: 'rejected',  label: 'Rejected',  color: '#dc2626' },
 ];
 
 export default function Board() {
@@ -65,7 +65,7 @@ export default function Board() {
   const total = jobs.length;
   const interviews = jobs.filter(j => j.status === 'interview').length;
   const offers = jobs.filter(j => j.status === 'offer').length;
-  const interviewRate = total > 0 ? Math.round((interviews / total) * 100) : 0;
+  const interviewRate = total > 0 ? Math.round(((interviews+offers) / total) * 100) : 0;
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
