@@ -5,7 +5,13 @@ require('dotenv').config();
 const app = express();
 
 //1.GLOBAL MIDDLEWARE
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://ai-job-tracker-dun.vercel.app'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 //2.ROUTES
