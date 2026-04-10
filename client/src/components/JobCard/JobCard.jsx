@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { deleteJob, updateJob } from '../../api/jobs';
-import { getMatchScore } from '../../api/ai';
+import { getMatchScore, generateCoverLetter } from '../../api/ai';
 
 const STATUS_COLORS = {
   applied:   { bg: '#dbeafe', text: '#1e40af' },
@@ -11,6 +11,7 @@ const STATUS_COLORS = {
 
 export default function JobCard({ job, onDelete, onUpdate }) {
   const [showEdit, setShowEdit] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
   const [form, setForm] = useState({
     company: job.company,
     role: job.role,
@@ -18,8 +19,17 @@ export default function JobCard({ job, onDelete, onUpdate }) {
     salary_range: job.salary_range || '',
   });
   const [saving, setSaving] = useState(false);
+
+  // match score state
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchReason, setMatchReason] = useState('');
+
+  // cover letter state
+  const [coverLetter, setCoverLetter] = useState('');
+  const [clLoading, setClLoading] = useState(false);
+  const [clError, setClError] = useState('');
+  const [copied, setCopied] = useState(false);
+
   const colors = STATUS_COLORS[job.status] || STATUS_COLORS.applied;
 
   const handleDelete = async (e) => {
@@ -49,7 +59,6 @@ export default function JobCard({ job, onDelete, onUpdate }) {
     const userSkills = userSkillsRaw.split(',').map(s => s.trim());
     const jobSkills = job.skills_required || [];
     if (jobSkills.length === 0) return alert('No skills on this job — add it via AI parser first');
-
     setMatchLoading(true);
     try {
       const result = await getMatchScore(userSkills, jobSkills, job.id);
@@ -60,6 +69,50 @@ export default function JobCard({ job, onDelete, onUpdate }) {
     }
     setMatchLoading(false);
   };
+
+  const handleGenerateCoverLetter = async () => {
+    if (!job.job_description) {
+      setClError('No job description saved — add this job via the AI parser first so it has a full JD.');
+      return;
+    }
+    setClLoading(true);
+    setClError('');
+    setCoverLetter('');
+    const userSkillsRaw = localStorage.getItem('userSkills') || '';
+    const userSkills = userSkillsRaw ? userSkillsRaw.split(',').map(s => s.trim()) : [];
+    const userName = localStorage.getItem('userName') || '';
+    try {
+      const result = await generateCoverLetter({
+        jobDescription: job.job_description,
+        jobRole: job.role,
+        jobCompany: job.company,
+        userSkills,
+        userName,
+      });
+      setCoverLetter(result.coverLetter);
+    } catch (err) {
+      setClError('Generation failed — try again');
+      console.error(err);
+    }
+    setClLoading(false);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(coverLetter);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const tabStyle = (tab) => ({
+    padding: '7px 16px',
+    fontSize: 13,
+    fontWeight: activeTab === tab ? 500 : 400,
+    background: activeTab === tab ? 'white' : 'transparent',
+    border: activeTab === tab ? '0.5px solid #e5e7eb' : '0.5px solid transparent',
+    borderRadius: 6,
+    cursor: 'pointer',
+    color: activeTab === tab ? '#111' : '#6b7280',
+  });
 
   return (
     <>
@@ -100,85 +153,195 @@ export default function JobCard({ job, onDelete, onUpdate }) {
         }}>
           <div style={{
             background: 'white', borderRadius: 12, padding: 24,
-            width: '100%', maxWidth: 480, boxSizing: 'border-box',
+            width: '100%', maxWidth: 520, boxSizing: 'border-box',
             maxHeight: '90vh', overflowY: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h3 style={{ margin: 0 }}>Edit job</h3>
+
+            {/* Modal header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16 }}>{job.role}</h3>
+                <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{job.company}</p>
+              </div>
               <button onClick={() => setShowEdit(false)}
-                style={{ background: 'none', border: 'none',color: '#9ca3af', fontSize: 20, cursor: 'pointer' }}>×</button>
+                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af' }}>×</button>
             </div>
 
-            <form onSubmit={handleSave}>
-              {[
-                { label: 'Company', name: 'company' },
-                { label: 'Role', name: 'role' },
-                { label: 'Salary range', name: 'salary_range' },
-                { label: 'Notes', name: 'notes' },
-              ].map(({ label, name }) => (
-                <div key={name} style={{ marginBottom: 12 }}>
-                  <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>{label}</label>
-                  <input
-                    value={form[name]}
-                    onChange={e => setForm({ ...form, [name]: e.target.value })}
-                    style={{
-                      width: '100%', padding: 8, boxSizing: 'border-box',
-                      borderRadius: 6, border: '1px solid #ddd'
-                    }}
-                  />
-                </div>
+            {/* Tabs */}
+            <div style={{
+              display: 'flex', gap: 4, background: '#f9fafb',
+              padding: 4, borderRadius: 8, marginBottom: 20
+            }}>
+              {['details', 'match score', 'cover letter'].map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)} style={tabStyle(tab)}>
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
               ))}
+            </div>
 
-              {job.skills_required?.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
-                  <label style={{ display: 'block', fontSize: 13, marginBottom: 6 }}>
-                    Required skills
-                  </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {job.skills_required.map(skill => (
-                      <span key={skill} style={{
-                        fontSize: 12, padding: '3px 10px', borderRadius: 20,
-                        background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe'
-                      }}>
-                        {skill}
-                      </span>
-                    ))}
+            {/* Tab: Details */}
+            {activeTab === 'details' && (
+              <form onSubmit={handleSave}>
+                {[
+                  { label: 'Company', name: 'company' },
+                  { label: 'Role', name: 'role' },
+                  { label: 'Salary range', name: 'salary_range' },
+                  { label: 'Notes', name: 'notes' },
+                ].map(({ label, name }) => (
+                  <div key={name} style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: '#374151' }}>{label}</label>
+                    <input
+                      value={form[name]}
+                      onChange={e => setForm({ ...form, [name]: e.target.value })}
+                      style={{
+                        width: '100%', padding: 8, boxSizing: 'border-box',
+                        borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 13
+                      }}
+                    />
                   </div>
-                </div>
-              )}
+                ))}
+                {job.skills_required?.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: '#374151' }}>Required skills</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {job.skills_required.map(skill => (
+                        <span key={skill} style={{
+                          fontSize: 12, padding: '3px 10px', borderRadius: 20,
+                          background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe'
+                        }}>{skill}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <button type="submit" disabled={saving}
+                  style={{
+                    width: '100%', padding: 10, borderRadius: 6, marginTop: 4,
+                    background: '#2563eb', color: 'white', border: 'none',
+                    cursor: 'pointer', fontSize: 14
+                  }}>
+                  {saving ? 'Saving...' : 'Save changes'}
+                </button>
+              </form>
+            )}
 
-              <div style={{ marginBottom: 16, padding: 12, background: '#f9fafb', borderRadius: 8 }}>
-                <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600 }}>Resume match score</p>
-                {job.match_score ? (
-                  <p style={{ margin: '0 0 6px', fontSize: 13 }}>
-                    Current score: <strong>{job.match_score}%</strong>
-                  </p>
-                ) : (
-                  <p style={{ margin: '0 0 6px', fontSize: 12, color: '#6b7280' }}>No score yet</p>
-                )}
-                {matchReason && (
-                  <p style={{ margin: '0 0 8px', fontSize: 12, color: '#6b7280' }}>{matchReason}</p>
-                )}
+            {/* Tab: Match score */}
+            {activeTab === 'match score' && (
+              <div>
+                <div style={{
+                  background: '#f9fafb', borderRadius: 8, padding: 16, marginBottom: 16
+                }}>
+                  {job.match_score ? (
+                    <>
+                      <p style={{ margin: '0 0 4px', fontSize: 13, color: '#6b7280' }}>Current score</p>
+                      <p style={{ margin: '0 0 8px', fontSize: 32, fontWeight: 700, color: job.match_score >= 70 ? '#16a34a' : job.match_score >= 40 ? '#d97706' : '#dc2626' }}>
+                        {job.match_score}%
+                      </p>
+                      {matchReason && <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{matchReason}</p>}
+                    </>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 13, color: '#9ca3af' }}>No score calculated yet</p>
+                  )}
+                </div>
                 <button
-                  type="button"
                   onClick={handleMatch}
                   disabled={matchLoading}
                   style={{
-                    padding: '6px 14px', borderRadius: 6, fontSize: 13,
-                    background: 'white', border: '1px solid #d1d5db', cursor: 'pointer'
+                    width: '100%', padding: 10, borderRadius: 6,
+                    background: 'white', border: '1px solid #e5e7eb',
+                    cursor: 'pointer', fontSize: 14
                   }}>
-                  {matchLoading ? 'Calculating...' : 'Calculate match score'}
+                  {matchLoading ? 'Calculating...' : job.match_score ? 'Recalculate score' : 'Calculate match score'}
                 </button>
               </div>
+            )}
 
-              <button type="submit" disabled={saving}
-                style={{
-                  width: '100%', padding: 10, borderRadius: 6,
-                  background: '#2563eb', color: 'white', border: 'none', cursor: 'pointer'
-                }}>
-                {saving ? 'Saving...' : 'Save changes'}
-              </button>
-            </form>
+            {/* Tab: Cover letter */}
+            {activeTab === 'cover letter' && (
+              <div>
+                {!coverLetter ? (
+                  <>
+                    <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+                      AI will write a tailored cover letter using the job description and your saved skills.
+                      Your name and skills are read from your browser — enter them once below.
+                    </p>
+
+                    {/* Quick profile inputs stored in localStorage */}
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: '#374151' }}>Your name</label>
+                      <input
+                        defaultValue={localStorage.getItem('userName') || ''}
+                        onChange={e => localStorage.setItem('userName', e.target.value)}
+                        placeholder="e.g. Bhavyaveer Singh"
+                        style={{
+                          width: '100%', padding: 8, boxSizing: 'border-box',
+                          borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 13
+                        }}
+                      />
+                    </div>
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: '#374151' }}>Your skills (comma separated)</label>
+                      <input
+                        defaultValue={localStorage.getItem('userSkills') || ''}
+                        onChange={e => localStorage.setItem('userSkills', e.target.value)}
+                        placeholder="e.g. React, Node.js, PostgreSQL, Python"
+                        style={{
+                          width: '100%', padding: 8, boxSizing: 'border-box',
+                          borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 13
+                        }}
+                      />
+                    </div>
+
+                    {clError && (
+                      <p style={{ fontSize: 13, color: '#dc2626', marginBottom: 12 }}>{clError}</p>
+                    )}
+
+                    <button
+                      onClick={handleGenerateCoverLetter}
+                      disabled={clLoading}
+                      style={{
+                        width: '100%', padding: 10, borderRadius: 6,
+                        background: '#2563eb', color: 'white',
+                        border: 'none', cursor: 'pointer', fontSize: 14
+                      }}>
+                      {clLoading ? 'Writing cover letter...' : 'Generate cover letter'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div style={{
+                      background: '#f9fafb', borderRadius: 8, padding: 16,
+                      marginBottom: 12, fontSize: 13, lineHeight: 1.8,
+                      color: '#374151', whiteSpace: 'pre-wrap',
+                      maxHeight: 320, overflowY: 'auto',
+                      border: '1px solid #e5e7eb'
+                    }}>
+                      {coverLetter}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={handleCopy}
+                        style={{
+                          flex: 1, padding: 9, borderRadius: 6,
+                          background: copied ? '#16a34a' : '#2563eb',
+                          color: 'white', border: 'none', cursor: 'pointer', fontSize: 13
+                        }}>
+                        {copied ? 'Copied!' : 'Copy to clipboard'}
+                      </button>
+                      <button
+                        onClick={() => { setCoverLetter(''); setClError(''); }}
+                        style={{
+                          padding: '9px 14px', borderRadius: 6,
+                          background: 'white', border: '1px solid #e5e7eb',
+                          cursor: 'pointer', fontSize: 13, color: '#6b7280'
+                        }}>
+                        Regenerate
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
           </div>
         </div>
       )}

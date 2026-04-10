@@ -26,17 +26,17 @@ router.post('/parse', async (req, res) => {
         {
           role: 'user',
           content: `Extract structured data from this job description.
-Return ONLY valid JSON with exactly these keys, nothing else, no markdown, no backticks:
-{
-  "role": "job title as a string",
-  "company": "company name as a string",
-  "skills_required": ["skill1", "skill2"],
-  "salary_range": "salary as string or null",
-  "summary": "2 sentence summary of the role"
-}
+          Return ONLY valid JSON with exactly these keys, nothing else, no markdown, no backticks:
+          {
+            "role": "job title as a string",
+            "company": "company name as a string",
+            "skills_required": ["skill1", "skill2"],
+            "salary_range": "salary as string or null",
+            "summary": "2 sentence summary of the role"
+          }
 
-Job description:
-${jobDescription}`,
+          Job description:
+          ${jobDescription}`,
         },
       ],
       temperature: 0.2,
@@ -62,14 +62,14 @@ router.post('/match', async (req, res) => {
         {
           role: 'user',
           content: `You are a technical recruiter. Compare these two skill lists and return a match score.
-Return ONLY valid JSON with exactly these keys, no markdown, no backticks:
-{
-  "score": <number 0-100>,
-  "reason": "one sentence explanation"
-}
+          Return ONLY valid JSON with exactly these keys, no markdown, no backticks:
+          {
+            "score": <number 0-100>,
+            "reason": "one sentence explanation"
+          }
 
-Candidate skills: ${userSkills.join(', ')}
-Required skills: ${jobSkills.join(', ')}`,
+          Candidate skills: ${userSkills.join(', ')}
+          Required skills: ${jobSkills.join(', ')}`,
         },
       ],
       temperature: 0.2,
@@ -89,6 +89,47 @@ Required skills: ${jobSkills.join(', ')}`,
     res.json(result);
   } catch (err) {
     console.error('Match error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/cover-letter', async (req, res) => {
+  const { jobDescription, jobRole, jobCompany, userSkills, userName } = req.body;
+  if (!jobDescription) return res.status(400).json({ error: 'Job description required' });
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        {
+          role: 'user',
+          content: `Write a professional, tailored cover letter for this job application.
+
+          Candidate name: ${userName || 'the candidate'}
+          Applying for: ${jobRole || 'the role'} at ${jobCompany || 'the company'}
+          Candidate skills: ${userSkills?.join(', ') || 'not provided'}
+
+          Job description:
+          ${jobDescription}
+
+          Instructions:
+          - Write 3 short paragraphs only
+          - First paragraph: express interest and mention 2-3 specific things from the job description
+          - Second paragraph: match 2-3 of the candidate's skills directly to job requirements
+          - Third paragraph: confident closing with a call to action
+          - Tone: professional but human, not robotic
+          - Do NOT include subject lines, dates, addresses, or placeholders like [Your Name]
+          - Start directly with "I am writing to express..."
+          - Return only the cover letter text, nothing else`,
+        },
+      ],
+      temperature: 0.7,
+    });
+
+    const coverLetter = completion.choices[0].message.content.trim();
+    res.json({ coverLetter });
+  } catch (err) {
+    console.error('Cover letter error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
