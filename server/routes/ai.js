@@ -99,32 +99,64 @@ router.post('/cover-letter', async (req, res) => {
 
   try {
     const completion = await client.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        {
-          role: 'user',
-          content: `Write a professional, tailored cover letter for this job application.
+  model: 'mixtral-8x7b-32768',
+  messages: [
+    {
+      role: 'system',
+      content: `You are a professional career coach and copywriter who has helped thousands of candidates land jobs at top companies. You write cover letters that sound like a real, smart human wrote them — never robotic, never generic. You follow instructions exactly and never deviate from the word count or structure given.`,
+    },
+    {
+      role: 'user',
+      content: `Write a highly effective, human-sounding cover letter tailored for this application.
 
-          Candidate name: ${userName || 'the candidate'}
-          Applying for: ${jobRole || 'the role'} at ${jobCompany || 'the company'}
-          Candidate skills: ${userSkills?.join(', ') || 'not provided'}
+        Candidate name: ${userName || 'the candidate'}
+        Applying for: ${jobRole || 'the role'} at ${jobCompany || 'the company'}
+        Candidate skills: ${userSkills?.join(', ') || 'not provided'}
 
-          Job description:
-          ${jobDescription}
+        Job description:
+        ${jobDescription}
 
-          Instructions:
-          - Write 3 short paragraphs only
-          - First paragraph: express interest and mention 2-3 specific things from the job description
-          - Second paragraph: match 2-3 of the candidate's skills directly to job requirements
-          - Third paragraph: confident closing with a call to action
-          - Tone: professional but human, not robotic
-          - Do NOT include subject lines, dates, addresses, or placeholders like [Your Name]
-          - Start directly with "I am writing to express..."
-          - Return only the cover letter text, nothing else`,
-        },
-      ],
-      temperature: 0.7,
-    });
+        GOAL:
+        Write a cover letter that feels written by a smart real candidate, not AI-generated. It should increase chances of recruiter response by being specific, concise, and relevant.
+
+        STRICT RULES:
+        - Maximum 220 words
+        - 3 short paragraphs only
+        - Natural tone: confident, warm, sharp, professional
+        - No robotic phrases
+        - No clichés like "I am writing to express", "dynamic company", "I am confident", "thrilled to apply", "please find attached"
+        - No repetition
+        - No exaggerated claims
+        - No placeholders
+        - No subject line, no addresses, no date
+
+        STRUCTURE:
+        Paragraph 1:
+        - Start with a strong natural opening that references the specific role
+        - Mention 2 specific things from the job description that genuinely interest you
+        - Show real understanding of what the company needs
+
+        Paragraph 2:
+        - Match 2-3 of the candidate's skills DIRECTLY to specific requirements in the job description
+        - Use concrete language — what you built, solved, or improved
+        - No vague praise like "strong communicator" or "team player"
+
+        Paragraph 3:
+        - Strong, short close
+        - One sentence on why this specific company
+        - Clear call to action
+
+        STYLE:
+        - Sentences vary between short punchy ones and longer detailed ones
+        - Sounds like a top candidate wrote it in 10 minutes, not a template
+        - Easy to skim in 20 seconds
+
+        Return ONLY the final cover letter text. No subject line. No intro. No explanation.`,
+      },
+    ],
+    temperature: 0.85,
+    max_tokens: 500,
+  });
 
     const coverLetter = completion.choices[0].message.content.trim();
     res.json({ coverLetter });

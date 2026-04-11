@@ -124,7 +124,7 @@ export default function JobCard({ job, onDelete, onUpdate }) {
           boxShadow: '0 1px 3px rgba(0,0,0,0.06)', cursor: 'pointer'
         }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
+          <div style={{flex: 1, textAlign: 'left'}}>
             <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{job.role}</p>
             <p style={{ margin: '2px 0 8px', fontSize: 13, color: '#6b7280' }}>{job.company}</p>
           </div>
@@ -271,7 +271,7 @@ export default function JobCard({ job, onDelete, onUpdate }) {
                       <input
                         defaultValue={localStorage.getItem('userName') || ''}
                         onChange={e => localStorage.setItem('userName', e.target.value)}
-                        placeholder="e.g. Bhavyaveer Singh"
+                        placeholder="e.g. John Doe"
                         style={{
                           width: '100%', padding: 8, boxSizing: 'border-box',
                           borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 13
