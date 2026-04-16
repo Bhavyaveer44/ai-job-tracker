@@ -166,4 +166,58 @@ router.post('/cover-letter', async (req, res) => {
   }
 });
 
+router.post('/interview-prep', async (req, res) => {
+  const { jobDescription, jobRole, jobCompany } = req.body;
+  if (!jobDescription) return res.status(400).json({ error: 'Job description required' });
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: 'mixtral-8x7b-32768',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a senior technical interviewer and career coach with 15 years of experience hiring at top tech companies. You know exactly what interviewers look for and how candidates should answer to stand out.`,
+        },
+        {
+          role: 'user',
+          content: `Generate 8 likely interview questions for this role with brief answer tips.
+
+          Role: ${jobRole || 'the role'}
+          Company: ${jobCompany || 'the company'}
+
+          Job description:
+          ${jobDescription}
+
+          RULES:
+          - Mix of question types: 2 technical, 2 behavioral, 2 role-specific, 1 culture fit, 1 situational
+          - Each question must be something this specific company would actually ask based on the JD
+          - Answer tips must be 1-2 sentences, concrete and actionable — not generic advice
+          - No fluff, no filler
+          - Return ONLY valid JSON, no markdown, no backticks, no explanation
+
+          Return this exact JSON structure:
+          {
+            "questions": [
+              {
+                "type": "technical",
+                "question": "the question text",
+                "tip": "specific answer tip"
+              }
+            ]
+          }`,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    });
+
+    const raw = completion.choices[0].message.content.trim();
+    const parsed = extractJSON(raw);
+    res.json(parsed);
+  } catch (err) {
+    console.error('Interview prep error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

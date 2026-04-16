@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { deleteJob, updateJob } from '../../api/jobs';
-import { getMatchScore, generateCoverLetter } from '../../api/ai';
+import { getMatchScore, generateCoverLetter, getInterviewPrep } from '../../api/ai';
 
 const STATUS_COLORS = {
   applied:   { bg: '#dbeafe', text: '#1e40af' },
@@ -29,6 +29,12 @@ export default function JobCard({ job, onDelete, onUpdate }) {
   const [clLoading, setClLoading] = useState(false);
   const [clError, setClError] = useState('');
   const [copied, setCopied] = useState(false);
+
+  //interview prep state
+  const [prepQuestions, setPrepQuestions] = useState([]);
+  const [prepLoading, setPrepLoading] = useState(false);
+  const [prepError, setPrepError] = useState('');
+  const [expandedQ, setExpandedQ] = useState(null);
 
   const colors = STATUS_COLORS[job.status] || STATUS_COLORS.applied;
 
@@ -95,6 +101,28 @@ export default function JobCard({ job, onDelete, onUpdate }) {
       console.error(err);
     }
     setClLoading(false);
+  };
+
+  const handleInterviewPrep = async () => {
+    if (!job.job_description) {
+      setPrepError('No job description saved — add this job via the AI parser first.');
+      return;
+    }
+    setPrepLoading(true);
+    setPrepError('');
+    setPrepQuestions([]);
+    try {
+      const result = await getInterviewPrep({
+        jobDescription: job.job_description,
+        jobRole: job.role,
+        jobCompany: job.company,
+      });
+      setPrepQuestions(result.questions || []);
+    } catch (err) {
+      setPrepError('Failed to generate questions — try again');
+      console.error(err);
+    }
+    setPrepLoading(false);
   };
 
   const handleCopy = () => {
@@ -170,9 +198,10 @@ export default function JobCard({ job, onDelete, onUpdate }) {
             {/* Tabs */}
             <div style={{
               display: 'flex', gap: 4, background: '#f9fafb',
-              padding: 4, borderRadius: 8, marginBottom: 20
+              padding: 4, borderRadius: 8, marginBottom: 20,
+              flexWrap: 'wrap'
             }}>
-              {['details', 'match score', 'cover letter'].map(tab => (
+              {['details', 'match score', 'cover letter', ...(job.status === 'interview' ? ['interview prep'] : [])].map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)} style={tabStyle(tab)}>
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
@@ -336,6 +365,104 @@ export default function JobCard({ job, onDelete, onUpdate }) {
                         }}>
                         Regenerate
                       </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Tab: Interview prep */}
+            {activeTab === 'interview prep' && (
+              <div>
+                {prepQuestions.length === 0 ? (
+                  <>
+                    <p style={{ margin: '0 0 16px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+                      Get 8 tailored interview questions based on this job description — with specific tips on how to answer each one.
+                    </p>
+                    {prepError && (
+                      <p style={{ fontSize: 13, color: '#dc2626', marginBottom: 12 }}>{prepError}</p>
+                    )}
+                    <button
+                      onClick={handleInterviewPrep}
+                      disabled={prepLoading}
+                      style={{
+                        width: '100%', padding: 10, borderRadius: 6,
+                        background: '#2563eb', color: 'white',
+                        border: 'none', cursor: 'pointer', fontSize: 14
+                      }}>
+                      {prepLoading ? 'Generating questions...' : 'Generate interview questions'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 500 }}>{prepQuestions.length} questions generated</p>
+                      <button
+                        onClick={() => setPrepQuestions([])}
+                        style={{
+                          fontSize: 12, padding: '4px 10px', borderRadius: 6,
+                          background: 'white', border: '1px solid #e5e7eb',
+                          cursor: 'pointer', color: '#6b7280'
+                        }}>
+                        Regenerate
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {prepQuestions.map((q, i) => {
+                        const TYPE_COLORS = {
+                          technical:    { bg: '#eff6ff', text: '#1e40af' },
+                          behavioral:   { bg: '#fef9c3', text: '#854d0e' },
+                          situational:  { bg: '#f3e8ff', text: '#6b21a8' },
+                          'culture fit':{ bg: '#dcfce7', text: '#166534' },
+                          'role-specific': { bg: '#ffedd5', text: '#9a3412' },
+                        };
+                        const tc = TYPE_COLORS[q.type] || { bg: '#f1f5f9', text: '#475569' };
+                        const isOpen = expandedQ === i;
+
+                        return (
+                          <div key={i} style={{
+                            border: '1px solid #e5e7eb', borderRadius: 8,
+                            overflow: 'hidden', background: 'white'
+                          }}>
+                            <button
+                              onClick={() => setExpandedQ(isOpen ? null : i)}
+                              style={{
+                                width: '100%', padding: '10px 12px', background: 'none',
+                                border: 'none', cursor: 'pointer', textAlign: 'left',
+                                display: 'flex', alignItems: 'flex-start', gap: 10
+                              }}>
+                              <span style={{
+                                fontSize: 11, fontWeight: 500, padding: '2px 8px',
+                                borderRadius: 20, background: tc.bg, color: tc.text,
+                                whiteSpace: 'nowrap', marginTop: 1, flexShrink: 0
+                              }}>
+                                {q.type}
+                              </span>
+                              <span style={{ fontSize: 13, color: '#111', flex: 1, textAlign: 'left', lineHeight: 1.5 }}>
+                                {q.question}
+                              </span>
+                              <span style={{ fontSize: 12, color: '#9ca3af', flexShrink: 0, marginTop: 1 }}>
+                                {isOpen ? '▲' : '▼'}
+                              </span>
+                            </button>
+
+                            {isOpen && (
+                              <div style={{
+                                padding: '0 12px 12px 12px',
+                                borderTop: '1px solid #f3f4f6'
+                              }}>
+                                <p style={{ margin: '10px 0 4px', fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                  Answer tip
+                                </p>
+                                <p style={{ margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
+                                  {q.tip}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </>
                 )}

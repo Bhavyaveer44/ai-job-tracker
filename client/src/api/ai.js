@@ -8,3 +8,6 @@ export const getMatchScore = (userSkills, jobSkills, jobId) =>
 
 export const generateCoverLetter = (payload) =>
   api.post('/api/ai/cover-letter', payload).then(r => r.data);
+
+export const getInterviewPrep = (payload) =>
+  api.post('/api/ai/interview-prep', payload).then(r => r.data);
