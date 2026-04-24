@@ -99,7 +99,7 @@ router.post('/cover-letter', async (req, res) => {
 
   try {
     const completion = await client.chat.completions.create({
-  model: 'mixtral-8x7b-32768',
+  model: 'meta-llama/llama-4-scout-17b-16e-instruct',
   messages: [
     {
       role: 'system',
@@ -172,7 +172,7 @@ router.post('/interview-prep', async (req, res) => {
 
   try {
     const completion = await client.chat.completions.create({
-      model: 'mixtral-8x7b-32768',
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [
         {
           role: 'system',
@@ -212,8 +212,27 @@ router.post('/interview-prep', async (req, res) => {
     });
 
     const raw = completion.choices[0].message.content.trim();
-    const parsed = extractJSON(raw);
-    res.json(parsed);
+
+    // parse Q: A: format into array of objects
+    const questions = [];
+    const blocks = raw.split(/\n\s*\n/);
+
+    for (const block of blocks) {
+      const qMatch = block.match(/Q:\s*(.+)/);
+      const aMatch = block.match(/A:\s*(.+)/s);
+      if (qMatch && aMatch) {
+        questions.push({
+          question: qMatch[1].trim(),
+          tip: aMatch[1].trim().replace(/\n/g, ' '),
+        });
+      }
+    }
+
+    if (questions.length === 0) {
+      return res.status(500).json({ error: 'Could not parse interview questions' });
+    }
+
+    res.json({ questions });
   } catch (err) {
     console.error('Interview prep error:', err.message);
     res.status(500).json({ error: err.message });
