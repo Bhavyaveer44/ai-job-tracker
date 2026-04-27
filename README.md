@@ -1,14 +1,16 @@
 # AI-Powered Job Tracker
 
-Track your job applications with an AI assistant that auto-fills job details and scores your resume fit.
+Track your job applications with an AI assistant that auto-fills job details, scores your skill matching, generates cover letter and interview questions.
 
 ## Live Demo
-[job-tracker.vercel.app](https://job-tracker.vercel.app)
+[job-tracker.vercel.app](https://ai-job-tracker-dun.vercel.app/)
 
 ## Features
 - Kanban board with drag and drop across Applied, Interview, Offer, Rejected
 - AI auto-fill — paste a job description and extract company, role, salary, skills instantly
 - Resume match score — compare your skills against job requirements (0–100%)
+- Generate multiple cover letters
+- Practice multiple interview questions
 - JWT authentication — secure, session-persistent login
 - Full CRUD — add, edit, delete jobs with live sync to database
 
@@ -16,7 +18,7 @@ Track your job applications with an AI assistant that auto-fills job details and
 - Frontend: React, Vite, @hello-pangea/dnd
 - Backend: Node.js, Express
 - Database: PostgreSQL via Supabase
-- AI: Groq API (Llama 3.3 70B)
+- AI: Groq API 
 - Deploy: Vercel (frontend) + Render (backend)
 
 ## Run locally
