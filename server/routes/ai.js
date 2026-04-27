@@ -167,75 +167,167 @@ router.post('/cover-letter', async (req, res) => {
 });
 
 router.post('/interview-prep', async (req, res) => {
-  const { jobDescription, jobRole, jobCompany } = req.body;
+  const { jobDescription, jobRole, jobCompany, seed } = req.body;
   if (!jobDescription) return res.status(400).json({ error: 'Job description required' });
 
   try {
+    // Use seed to add variety to each request
+    const varietyHint = seed ? `Request #${seed % 1000} - ` : '';
+    
     const completion = await client.chat.completions.create({
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         {
           role: 'system',
-          content: `You are a senior technical interviewer and career coach with 15 years of experience hiring at top tech companies. You know exactly what interviewers look for and how candidates should answer to stand out.`,
+          content: 'You are an expert technical interviewer. You generate realistic interview questions based on job descriptions. You always follow the exact output format given to you.',
         },
         {
           role: 'user',
-          content: `Generate 8 likely interview questions for this role with brief answer tips.
+          content: `${varietyHint}Generate exactly 8 DIFFERENT interview questions for this role. Do NOT repeat questions from typical generic lists.
 
-          Role: ${jobRole || 'the role'}
-          Company: ${jobCompany || 'the company'}
+          Role: ${jobRole || 'the role'} at ${jobCompany || 'the company'}
 
           Job description:
           ${jobDescription}
 
-          RULES:
-          - Mix of question types: 2 technical, 2 behavioral, 2 role-specific, 1 culture fit, 1 situational
-          - Each question must be something this specific company would actually ask based on the JD
-          - Answer tips must be 1-2 sentences, concrete and actionable — not generic advice
-          - No fluff, no filler
-          - Return ONLY valid JSON, no markdown, no backticks, no explanation
+          You MUST format each question and answer exactly like this with a blank line between each pair:
 
-          Return this exact JSON structure:
-          {
-            "questions": [
-              {
-                "type": "technical",
-                "question": "the question text",
-                "tip": "specific answer tip"
-              }
-            ]
-          }`,
+          Q: Your question here
+          A: Your answer tip here
+
+          Q: Your question here
+          A: Your answer tip here
+
+          Important rules:
+          - Exactly 8 questions
+          - Keep answer tips under 25 words each
+          - Mix of technical, behavioral, and situational questions
+          - Only output the Q and A pairs, nothing else
+          - No numbering, no dashes, no extra text before or after`,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 500,
+      temperature: 0.8,
+      max_tokens: 900,
     });
 
     const raw = completion.choices[0].message.content.trim();
+    console.log('Raw interview prep response:', raw);
 
-    // parse Q: A: format into array of objects
     const questions = [];
-    const blocks = raw.split(/\n\s*\n/);
 
-    for (const block of blocks) {
-      const qMatch = block.match(/Q:\s*(.+)/);
-      const aMatch = block.match(/A:\s*(.+)/s);
-      if (qMatch && aMatch) {
-        questions.push({
-          question: qMatch[1].trim(),
-          tip: aMatch[1].trim().replace(/\n/g, ' '),
-        });
+    const normalized = raw
+      .replace(/\*\*/g, '') // remove markdown bold
+      .replace(/\r/g, '')
+      .trim();
+
+    // Try multiple parsing strategies
+    let blocks = [];
+    
+    // Strategy 1: Split by blank lines
+    blocks = normalized.split(/\n\s*\n/);
+    
+    // Strategy 2: If no blocks, try splitting by double newlines
+    if (blocks.length < 2) {
+      blocks = normalized.split(/\n\n+/);
+    }
+    
+    // Strategy 3: If still no luck, try to find Q/A pairs anywhere in the text
+    if (blocks.length < 2) {
+      const qaPattern = /(?:Q:|Question:|\d+\.)\s*([^\n]+)(?:\n|\r)+(?:A:|Answer:|Tip:)\s*([^\n]+)/gi;
+      let match;
+      while ((match = qaPattern.exec(normalized)) !== null) {
+        if (match[1] && match[2]) {
+          questions.push({
+            question: match[1].trim(),
+            tip: match[2].trim(),
+            type: 'general',
+          });
+        }
+      }
+    }
+
+    // Parse blocks if we have them
+    if (blocks.length >= 2) {
+      for (const block of blocks) {
+        const lines = block.split('\n').map(line => line.trim()).filter(Boolean);
+
+        let question = '';
+        let tip = '';
+
+        for (const line of lines) {
+          if (
+            line.startsWith('Q:') ||
+            line.startsWith('Question:') ||
+            /^\d+\./.test(line)
+          ) {
+            question = line
+              .replace(/^Q:/, '')
+              .replace(/^Question:/, '')
+              .replace(/^\d+\.\s*/, '')
+              .trim();
+          }
+
+          if (
+            line.startsWith('A:') ||
+            line.startsWith('Answer:') ||
+            line.startsWith('Tip:')
+          ) {
+            tip = line
+              .replace(/^A:/, '')
+              .replace(/^Answer:/, '')
+              .replace(/^Tip:/, '')
+              .trim();
+          }
+        }
+
+        if (question && tip) {
+          questions.push({
+            question,
+            tip,
+            type: 'general',
+          });
+        }
+      }
+    }
+
+    console.log('Parsed questions count:', questions.length);
+
+    if (questions.length === 0) {
+      // Last resort: try to extract any question-like and answer-like lines
+      const allLines = normalized.split('\n').filter(l => l.trim());
+      for (let i = 0; i < allLines.length - 1; i++) {
+        const line = allLines[i].trim();
+        const nextLine = allLines[i + 1].trim();
+        
+        // Check if this looks like a question
+        if (line.startsWith('Q:') || line.startsWith('Question:') || /^\d+\./.test(line)) {
+          const questionText = line.replace(/^(Q:|Question:|\d+\.)\s*/, '');
+          // Check if next line looks like an answer
+          if (nextLine.startsWith('A:') || nextLine.startsWith('Answer:') || nextLine.startsWith('Tip:')) {
+            const tipText = nextLine.replace(/^(A:|Answer:|Tip:)\s*/, '');
+            questions.push({ question: questionText, tip: tipText, type: 'general' });
+          }
+        }
       }
     }
 
     if (questions.length === 0) {
-      return res.status(500).json({ error: 'Could not parse interview questions' });
+      throw new Error('No valid Q&A pairs found in AI response');
     }
 
-    res.json({ questions });
+    // Ensure we have exactly 8 questions (pad or trim)
+    while (questions.length < 8) {
+      questions.push({
+        question: 'Tell me about a challenging project you worked on.',
+        tip: 'Use the STAR method to describe a specific situation.',
+        type: 'behavioral',
+      });
+    }
+
+    res.json({ questions: questions.slice(0, 8) });
   } catch (err) {
     console.error('Interview prep error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message, details: err?.error?.message || '' });
   }
 });
 

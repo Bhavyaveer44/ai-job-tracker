@@ -116,6 +116,7 @@ export default function JobCard({ job, onDelete, onUpdate }) {
         jobDescription: job.job_description,
         jobRole: job.role,
         jobCompany: job.company,
+        seed: Date.now(), // Add timestamp to ensure fresh questions on regenerate
       });
       setPrepQuestions(result.questions || []);
     } catch (err) {
