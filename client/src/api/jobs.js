@@ -7,3 +7,5 @@ export const createJob = (jobData) => api.post('/api/jobs', jobData).then(r => r
 export const updateJob = (id,updates) => api.patch(`/api/jobs/${id}`, updates).then(r => r.data);
 
 export const deleteJob = (id) => api.delete(`/api/jobs/${id}`).then(r => r.data);
+
+export const getAnalytics = () => api.get('/api/jobs/analytics').then(r => r.data);

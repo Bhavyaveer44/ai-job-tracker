@@ -67,4 +67,67 @@ router.delete('/:id',async(req,res) =>{
     if(error) return res.status(500).json({ error: error.message});
     res.json({message: 'Job deleted'});
 });
+
+router.get('/analytics', async (req, res) => {
+  try {
+    const { data: jobs, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('user_id', req.userId);
+
+    if (error) throw error;
+
+    // applications over time (last 30 days)
+    const last30 = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (29 - i));
+      return d.toISOString().split('T')[0];
+    });
+
+    const appsByDate = last30.map(date => ({
+      date: date.slice(5),
+      count: jobs.filter(j => j.created_at?.split('T')[0] === date).length,
+    }));
+
+    // status breakdown
+    const statusBreakdown = ['applied', 'interview', 'offer', 'rejected'].map(status => ({
+      name: status.charAt(0).toUpperCase() + status.slice(1),
+      value: jobs.filter(j => j.status === status).length,
+    }));
+
+    // top companies
+    const companyCounts = jobs.reduce((acc, j) => {
+      acc[j.company] = (acc[j.company] || 0) + 1;
+      return acc;
+    }, {});
+    const topCompanies = Object.entries(companyCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([company, count]) => ({ company, count }));
+
+    // avg match score
+    const scored = jobs.filter(j => j.match_score);
+    const avgMatchScore = scored.length
+      ? Math.round(scored.reduce((sum, j) => sum + j.match_score, 0) / scored.length)
+      : 0;
+
+    // response rate (interview + offer / total)
+    const responseRate = jobs.length
+      ? Math.round(((jobs.filter(j => ['interview', 'offer'].includes(j.status)).length) / jobs.length) * 100)
+      : 0;
+
+    res.json({
+      total: jobs.length,
+      avgMatchScore,
+      responseRate,
+      appsByDate,
+      statusBreakdown,
+      topCompanies,
+    });
+  } catch (err) {
+    console.error('Analytics error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports=router;

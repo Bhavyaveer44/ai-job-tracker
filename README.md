@@ -23,14 +23,14 @@ Track your job applications with an AI assistant that auto-fills job details, sc
 
 ## Run locally
 
-### Backend
+## Backend
 cd server
 npm install
-# create .env with SUPABASE_URL, SUPABASE_SERVICE_KEY, JWT_SECRET, GROQ_API_KEY
+### create .env with SUPABASE_URL, SUPABASE_SERVICE_KEY, JWT_SECRET, GROQ_API_KEY
 node index.js
 
-### Frontend
+## Frontend
 cd client
 npm install
-# create .env with VITE_API_URL=http://localhost:5000
+### create .env with VITE_API_URL=http://localhost:5000
 npm run dev
