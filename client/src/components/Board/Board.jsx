@@ -6,11 +6,21 @@ import JobCard from '../JobCard/JobCard';
 import AddJobModal from '../AddJobModal/AddJobModal';
 
 const COLUMNS = [
-  { id: 'applied',   label: 'Applied',   color: '#2563eb' },
-  { id: 'rejected',  label: 'Rejected',  color: '#dc2626' },
-  { id: 'interview', label: 'Interview', color: '#d97706' },
-  { id: 'offer',     label: 'Offer',     color: '#16a34a' },
+  { id: 'applied',   label: 'Applied',   color: '#2563eb', border: '#2563eb' },
+  { id: 'rejected',  label: 'Rejected',  color: '#dc2626', border: '#dc2626' },
+  { id: 'interview', label: 'Interview', color: '#d97706', border: '#d97706' },
+  { id: 'offer',     label: 'Offer',     color: '#16a34a', border: '#16a34a' },
 ];
+
+const StatCard = ({ label, value, color }) => (
+  <div style={{
+    background: '#2a2a2a', borderRadius: 12, padding: '18px 22px',
+    border: '1px solid #3d3d3d', flex: 1
+  }}>
+    <p style={{ margin: '0 0 8px', fontSize: 12, color: '#6b7280', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</p>
+    <p style={{ margin: 0, fontSize: 32, fontWeight: 700, color: color || 'white' }}>{value}</p>
+  </div>
+);
 
 export default function Board() {
   const [jobs, setJobs] = useState([]);
@@ -28,44 +38,25 @@ export default function Board() {
     const { draggableId, destination, source } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId) return;
-
     const newStatus = destination.droppableId;
-
-    setJobs(prev =>
-      prev.map(j => j.id === draggableId ? { ...j, status: newStatus } : j)
-    );
-
+    setJobs(prev => prev.map(j => j.id === draggableId ? { ...j, status: newStatus } : j));
     try {
       await updateJob(draggableId, { status: newStatus });
       toast.success(`Moved to ${newStatus}`);
     } catch {
       toast.error('Failed to update status');
-      setJobs(prev =>
-        prev.map(j => j.id === draggableId ? { ...j, status: source.droppableId } : j)
-      );
+      setJobs(prev => prev.map(j => j.id === draggableId ? { ...j, status: source.droppableId } : j));
     }
   };
 
-  const handleJobAdded = (newJob) => {
-    setJobs(prev => [newJob, ...prev]);
-    toast.success('Job added');
-  };
+  const handleJobAdded = (newJob) => { setJobs(prev => [newJob, ...prev]); toast.success('Job added'); };
+  const handleJobDeleted = (id) => { setJobs(prev => prev.filter(j => j.id !== id)); toast.success('Job deleted'); };
+  const handleJobUpdated = (updatedJob) => { setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j)); toast.success('Job updated'); };
 
-  const handleJobDeleted = (id) => {
-    setJobs(prev => prev.filter(j => j.id !== id));
-    toast.success('Job deleted');
-  };
-
-  const handleJobUpdated = (updatedJob) => {
-    setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
-    toast.success('Job updated');
-  };
-
-  // stats
   const total = jobs.length;
   const interviews = jobs.filter(j => j.status === 'interview').length;
   const offers = jobs.filter(j => j.status === 'offer').length;
-  const interviewRate = total > 0 ? Math.round(((interviews+offers) / total) * 100) : 0;
+  const interviewRate = total > 0 ? Math.round((interviews / total) * 100) : 0;
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
@@ -77,44 +68,44 @@ export default function Board() {
     <div style={{ padding: 24 }}>
 
       {/* Stats bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
-        {[
-          { label: 'Total applied', value: total, color: '#2563eb' },
-          { label: 'Interviews', value: interviews, color: '#d97706' },
-          { label: 'Interview rate', value: `${interviewRate}%`, color: '#7c3aed' },
-          { label: 'Offers', value: offers, color: '#16a34a' },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{
-            background: 'white', borderRadius: 10, padding: '14px 18px',
-            border: '1px solid #e5e7eb'
-          }}>
-            <p style={{ margin: '0 0 4px', fontSize: 12, color: '#6b7280' }}>{label}</p>
-            <p style={{ margin: 0, fontSize: 24, fontWeight: 600, color }}>{value}</p>
-          </div>
-        ))}
+      <div style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
+        <StatCard label="Total Applied" value={total} color="#2563eb" />
+        <StatCard label="Interviews" value={interviews} color="#d97706" />
+        <StatCard label="Interview Rate" value={`${interviewRate}%`} color={interviewRate >= 20 ? '#d97706' : '#d97706'} />
+        <StatCard label="Offers" value={offers} color="#16a34a" />
       </div>
 
-      {/* Board header */}
+      {/* Add job button */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
         <button
           onClick={() => setShowModal(true)}
           style={{
-            padding: '8px 18px', background: '#2563eb', color: 'white',
-            border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 500
+            padding: '9px 20px', background: '#2563eb', color: 'white',
+            border: 'none', borderRadius: 8, cursor: 'pointer',
+            fontWeight: 600, fontSize: 14
           }}>
           + Add job
         </button>
       </div>
 
-      {/* Kanban columns */}
+      {/* Kanban */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           {COLUMNS.map(col => (
-            <div key={col.id} style={{ background: '#f9fafb', borderRadius: 10, padding: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: col.color }} />
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{col.label}</h3>
-                <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9ca3af' }}>
+            <div key={col.id} style={{
+              background: '#2a2a2a',
+              borderRadius: 12,
+              border: `1px solid #3d3d3d`,
+              borderTop: `3px solid ${col.border}`,
+              padding: 14
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                <div style={{ width: 9, height: 9, borderRadius: '50%', background: col.color }} />
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'white' }}>{col.label}</h3>
+                <span style={{
+                  marginLeft: 'auto', fontSize: 12, color: '#6b7280',
+                  background: '#3d3d3d', padding: '1px 8px', borderRadius: 20
+                }}>
                   {jobs.filter(j => j.status === col.id).length}
                 </span>
               </div>
@@ -126,35 +117,23 @@ export default function Board() {
                     {...provided.droppableProps}
                     style={{
                       minHeight: 200,
-                      background: snapshot.isDraggingOver ? '#eff6ff' : 'transparent',
-                      borderRadius: 8, transition: 'background 0.2s', padding: 4
+                      background: snapshot.isDraggingOver ? '#333' : 'transparent',
+                      borderRadius: 8, transition: 'background 0.2s', padding: 2
                     }}>
                     {jobs.filter(j => j.status === col.id).length === 0 && (
-                      <div style={{
-                        textAlign: 'center', padding: '40px 0',
-                        color: '#d1d5db', fontSize: 13
-                      }}>
+                      <div style={{ textAlign: 'center', padding: '40px 0', color: '#4b5563', fontSize: 13 }}>
                         No jobs here
                       </div>
                     )}
-                    {jobs
-                      .filter(j => j.status === col.id)
-                      .map((job, index) => (
-                        <Draggable key={job.id} draggableId={job.id} index={index}>
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}>
-                              <JobCard
-                                job={job}
-                                onDelete={handleJobDeleted}
-                                onUpdate={handleJobUpdated}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
+                    {jobs.filter(j => j.status === col.id).map((job, index) => (
+                      <Draggable key={job.id} draggableId={job.id} index={index}>
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                            <JobCard job={job} onDelete={handleJobDeleted} onUpdate={handleJobUpdated} />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
                     {provided.placeholder}
                   </div>
                 )}
@@ -165,10 +144,7 @@ export default function Board() {
       </DragDropContext>
 
       {showModal && (
-        <AddJobModal
-          onClose={() => setShowModal(false)}
-          onJobAdded={handleJobAdded}
-        />
+        <AddJobModal onClose={() => setShowModal(false)} onJobAdded={handleJobAdded} />
       )}
     </div>
   );

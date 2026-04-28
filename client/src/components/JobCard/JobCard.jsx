@@ -148,19 +148,23 @@ export default function JobCard({ job, onDelete, onUpdate }) {
       <div
         onClick={() => setShowEdit(true)}
         style={{
-          background: 'white', borderRadius: 8, padding: 14,
-          border: '1px solid #e5e7eb', marginBottom: 8,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06)', cursor: 'pointer'
+          background: '#1e1e1e',
+          borderRadius: 8,
+          padding: 14,
+          border: '1px solid #3d3d3d',
+          marginBottom: 8,
+          cursor: 'pointer',
+          transition: 'border-color 0.15s'
         }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{flex: 1, textAlign: 'left'}}>
-            <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{job.role}</p>
-            <p style={{ margin: '2px 0 8px', fontSize: 13, color: '#6b7280' }}>{job.company}</p>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: 'white' }}>{job.role}</p>
+            <p style={{ margin: '2px 0 8px', fontSize: 13, color: '#9ca3af' }}>{job.company}</p>
           </div>
           <button onClick={handleDelete}
-            style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>
-            ×
-          </button>
+          style={{ background: 'none', border: 'none', color: '#4b5563', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>
+          ×
+        </button>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{
