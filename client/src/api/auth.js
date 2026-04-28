@@ -1,4 +1,4 @@
-const BASE = ''; // Uses proxy in vite.config.js
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const registerUser = (email, password) =>
   fetch(`${BASE}/api/auth/register`, {
