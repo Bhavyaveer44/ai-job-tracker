@@ -274,7 +274,7 @@ export default function Analytics() {
                             </>
                           )}
                           {job.status === 'applied' && (
-                            <span style={{ color: '#4b5563' }}> · Applied</span>
+                            <span style={{ color: '#2b6bc5' }}> · Applied</span>
                           )}
                         </p>
                       </div>
