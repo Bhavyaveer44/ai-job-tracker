@@ -228,8 +228,12 @@ export default function Board() {
                     {...provided.droppableProps}
                     style={{
                       minHeight: 200,
+                      maxHeight: 'calc(100vh - 320px)',
+                      overflowY: 'auto',
                       background: snapshot.isDraggingOver ? '#333' : 'transparent',
-                      borderRadius: 8, transition: 'background 0.2s', padding: 2
+                      borderRadius: 8, transition: 'background 0.2s', padding: 2,
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '#3d3d3d transparent',
                     }}>
                     {filteredJobs.filter(j => j.status === col.id).length === 0 && (
                       <div style={{ textAlign: 'center', padding: '40px 0', color: '#ffffff', fontSize: 13 }}>
