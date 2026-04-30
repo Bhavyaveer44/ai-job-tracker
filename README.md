@@ -11,6 +11,7 @@ Track your job applications with an AI assistant that auto-fills job details, sc
 - Resume match score — compare your skills against job requirements (0–100%)
 - Generate multiple cover letters
 - Practice multiple interview questions
+- Analytics dashboard — applications timeline, status breakdown pie chart
 - JWT authentication — secure, session-persistent login
 - Full CRUD — add, edit, delete jobs with live sync to database
 

@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { getJobs, updateJob } from '../../api/jobs';
 import JobCard from '../JobCard/JobCard';
 import AddJobModal from '../AddJobModal/AddJobModal';
-
+import { useDebounce } from 'use-debounce';
 const COLUMNS = [
   { id: 'applied',   label: 'Applied',   color: '#2563eb', border: '#2563eb' },
   { id: 'rejected',  label: 'Rejected',  color: '#dc2626', border: '#dc2626' },
@@ -26,6 +26,9 @@ export default function Board() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [debouncedSearch] = useDebounce(search, 300);
 
   useEffect(() => {
     getJobs()
@@ -56,7 +59,17 @@ export default function Board() {
   const total = jobs.length;
   const interviews = jobs.filter(j => j.status === 'interview').length;
   const offers = jobs.filter(j => j.status === 'offer').length;
-  const interviewRate = total > 0 ? Math.round((interviews / total) * 100) : 0;
+  const interviewRate = total > 0 ? Math.round(((interviews+offers) / total) * 100) : 0;
+
+  const filteredJobs = jobs.filter(j => {
+    const matchesSearch =
+      j.role?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      j.company?.toLowerCase().includes(debouncedSearch.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || j.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const isFiltering = debouncedSearch !== '' || statusFilter !== 'all';
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
@@ -75,17 +88,115 @@ export default function Board() {
         <StatCard label="Offers" value={offers} color="#16a34a" />
       </div>
 
-      {/* Add job button */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{
-            padding: '9px 20px', background: '#2563eb', color: 'white',
-            border: 'none', borderRadius: 8, cursor: 'pointer',
-            fontWeight: 600, fontSize: 14
-          }}>
-          + Add job
-        </button>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'
+        }}>
+
+          {/* Search input */}
+          <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
+            <span style={{
+              position: 'absolute', left: 12, top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: 14, color: '#4b5563', pointerEvents: 'none'
+            }}>⌕</span>
+            <input
+              type="text"
+              placeholder="Search role or company..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                width: '100%', padding: '8px 14px 8px 34px',
+                borderRadius: 8, border: '1px solid #3d3d3d',
+                background: '#2a2a2a', color: 'white',
+                fontSize: 14, outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                style={{
+                  position: 'absolute', right: 10, top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none', border: 'none',
+                  color: '#6b7280', cursor: 'pointer', fontSize: 16,
+                  lineHeight: 1, padding: 0
+                }}>
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Status filter */}
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            style={{
+              padding: '8px 14px', borderRadius: 8,
+              border: '1px solid #3d3d3d',
+              background: '#2a2a2a',
+              color: statusFilter === 'all' ? '#6b7280' : 'white',
+              fontSize: 14, cursor: 'pointer', outline: 'none',
+            }}>
+            <option value="all">All statuses</option>
+            <option value="applied">Applied</option>
+            <option value="interview">Interview</option>
+            <option value="offer">Offer</option>
+            <option value="rejected">Rejected</option>
+          </select>
+
+          {/* Clear button — only shows when filtering */}
+          {isFiltering && (
+            <button
+              onClick={() => { setSearch(''); setStatusFilter('all'); }}
+              style={{
+                padding: '8px 14px', borderRadius: 8,
+                border: '1px solid #3d3d3d', background: 'transparent',
+                color: '#9ca3af', fontSize: 13, cursor: 'pointer',
+                transition: 'color 0.15s'
+              }}>
+              Clear filters
+            </button>
+          )}
+
+          {/* Add job */}
+          <button
+            onClick={() => setShowModal(true)}
+            style={{
+              padding: '9px 20px', background: '#2563eb', color: 'white',
+              border: 'none', borderRadius: 8, cursor: 'pointer',
+              fontWeight: 600, fontSize: 14, marginLeft: 'auto'
+            }}>
+            + Add job
+          </button>
+        </div>
+
+        {/* Active filter indicator */}
+        {isFiltering && (
+          <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: '#6b7280' }}>
+              Showing {filteredJobs.length} of {jobs.length} jobs
+            </span>
+            {debouncedSearch && (
+              <span style={{
+                fontSize: 11, padding: '2px 10px', borderRadius: 20,
+                background: '#1e3a5f', color: '#60a5fa',
+                border: '1px solid #1e40af'
+              }}>
+                "{debouncedSearch}"
+              </span>
+            )}
+            {statusFilter !== 'all' && (
+              <span style={{
+                fontSize: 11, padding: '2px 10px', borderRadius: 20,
+                background: '#1a2e1a', color: '#4ade80',
+                border: '1px solid #166534'
+              }}>
+                {statusFilter}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Kanban */}
@@ -103,10 +214,10 @@ export default function Board() {
                 <div style={{ width: 9, height: 9, borderRadius: '50%', background: col.color }} />
                 <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'white' }}>{col.label}</h3>
                 <span style={{
-                  marginLeft: 'auto', fontSize: 12, color: '#6b7280',
-                  background: '#3d3d3d', padding: '1px 8px', borderRadius: 20
+                  marginLeft: 'auto', fontSize: 12, color: '#00ff3c',
+                  background: '#211f1f', padding: '1px 8px', borderRadius: 20
                 }}>
-                  {jobs.filter(j => j.status === col.id).length}
+                  {filteredJobs.filter(j => j.status === col.id).length}
                 </span>
               </div>
 
@@ -120,12 +231,12 @@ export default function Board() {
                       background: snapshot.isDraggingOver ? '#333' : 'transparent',
                       borderRadius: 8, transition: 'background 0.2s', padding: 2
                     }}>
-                    {jobs.filter(j => j.status === col.id).length === 0 && (
-                      <div style={{ textAlign: 'center', padding: '40px 0', color: '#4b5563', fontSize: 13 }}>
-                        No jobs here
+                    {filteredJobs.filter(j => j.status === col.id).length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '40px 0', color: '#ffffff', fontSize: 13 }}>
+                        {isFiltering ? 'No matches' : 'No jobs here'}
                       </div>
                     )}
-                    {jobs.filter(j => j.status === col.id).map((job, index) => (
+                    {filteredJobs.filter(j => j.status === col.id).map((job, index) => (
                       <Draggable key={job.id} draggableId={job.id} index={index}>
                         {(provided) => (
                           <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>

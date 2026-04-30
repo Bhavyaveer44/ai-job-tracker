@@ -174,7 +174,7 @@ export default function JobCard({ job, onDelete, onUpdate }) {
             {job.status}
           </span>
           {job.match_score && (
-            <span style={{ fontSize: 12, color: '#6b7280' }}>Match: {job.match_score}%</span>
+            <span style={{ fontSize: 12, color: '#65ce65' }}>Match: {job.match_score}%</span>
           )}
         </div>
       </div>
