@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Board from '../components/Board/Board';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, isDemo } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -11,6 +11,8 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+
+      {/* Navbar */}
       <div style={{
         background: '#1a1a1a', borderBottom: '1px solid #2d2d2d',
         padding: '14px 24px', display: 'flex',
@@ -32,7 +34,6 @@ export default function Dashboard() {
                   color: location.pathname === path ? 'white' : '#9ca3af',
                   cursor: 'pointer', fontSize: 14,
                   fontWeight: location.pathname === path ? 600 : 400,
-                  transition: 'all 0.15s'
                 }}>
                 {label}
               </button>
@@ -51,6 +52,38 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* Demo banner */}
+      {isDemo && (
+        <div style={{
+          background: 'rgba(37,99,235,0.15)',
+          borderBottom: '1px solid rgba(37,99,235,0.3)',
+          padding: '10px 24px',
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: '#60a5fa'
+            }} />
+            <span style={{ fontSize: 13, color: '#93c5fd' }}>
+              You're viewing a demo account with pre-loaded data — changes won't be saved
+            </span>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '5px 14px', borderRadius: 6,
+              background: '#2563eb', color: 'white',
+              border: 'none', cursor: 'pointer',
+              fontSize: 13, fontWeight: 500
+            }}>
+            Create free account
+          </button>
+        </div>
+      )}
+
       <Board />
     </div>
   );

@@ -76,4 +76,33 @@ router.post('/login', async(req,res)=> {
     }
 });
 
+// Demo login — returns token for pre-seeded demo account
+router.post('/demo', async (req, res) => {
+  try {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', 'demo@jobtracker.com')
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({ error: 'Demo account not found — run the seed SQL first' });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '2h' }
+    );
+
+    res.json({
+      token,
+      user: { id: user.id, email: user.email },
+      isDemo: true,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports= router;

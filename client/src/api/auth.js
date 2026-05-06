@@ -13,3 +13,8 @@ export const loginUser = (email, password) =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   }).then(r => r.json());
+
+export const demoLogin = () =>
+  fetch(`${BASE}/api/auth/demo`, { 
+    method: 'POST' 
+  }).then(r => r.json());
