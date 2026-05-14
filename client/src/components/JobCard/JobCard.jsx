@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { deleteJob, updateJob } from '../../api/jobs';
-import { getMatchScore, generateCoverLetter, getInterviewPrep } from '../../api/ai';
+import { getMatchScore, generateCoverLetter, getInterviewPrep, scoreResume } from '../../api/ai';
 
 const STATUS_COLORS = {
   applied:   { bg: '#dbeafe', text: '#1e40af' },
@@ -35,6 +35,13 @@ export default function JobCard({ job, onDelete, onUpdate }) {
   const [prepLoading, setPrepLoading] = useState(false);
   const [prepError, setPrepError] = useState('');
   const [expandedQ, setExpandedQ] = useState(null);
+
+  // ATS scanner state
+  const [atsResult, setAtsResult] = useState(null);
+  const [atsLoading, setAtsLoading] = useState(false);
+  const [atsError, setAtsError] = useState('');
+  const [resumeFile, setResumeFile] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
 
   const colors = STATUS_COLORS[job.status] || STATUS_COLORS.applied;
 
@@ -126,6 +133,21 @@ export default function JobCard({ job, onDelete, onUpdate }) {
     setPrepLoading(false);
   };
 
+  const handleResumeScore = async () => {
+    if (!resumeFile) return setAtsError('Please upload your resume PDF first');
+    if (!job.job_description) return setAtsError('This job has no description — add it via AI parser first');
+    setAtsLoading(true);
+    setAtsError('');
+    setAtsResult(null);
+    try {
+      const result = await scoreResume(resumeFile, job.job_description, job.role, job.company);
+      setAtsResult(result);
+    } catch (err) {
+      setAtsError(err.response?.data?.error || 'Scoring failed — try again');
+    }
+    setAtsLoading(false);
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(coverLetter);
     setCopied(true);
@@ -186,7 +208,7 @@ export default function JobCard({ job, onDelete, onUpdate }) {
         }}>
           <div style={{
             background: 'white', borderRadius: 12, padding: 24,
-            width: '100%', maxWidth: 520, boxSizing: 'border-box',
+            width: '100%', maxWidth: 580, boxSizing: 'border-box',
             maxHeight: '90vh', overflowY: 'auto'
           }}>
 
@@ -204,9 +226,9 @@ export default function JobCard({ job, onDelete, onUpdate }) {
             <div style={{
               display: 'flex', gap: 4, background: '#f9fafb',
               padding: 4, borderRadius: 8, marginBottom: 20,
-              flexWrap: 'wrap'
+              overflowX: 'auto'
             }}>
-              {['details', 'match score', 'cover letter', ...(job.status === 'interview' ? ['interview prep'] : [])].map(tab => (
+              {['details', 'match score', 'cover letter', 'ats scanner', ...(job.status === 'interview' ? ['interview prep'] : [])].map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)} style={tabStyle(tab)}>
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
@@ -376,6 +398,187 @@ export default function JobCard({ job, onDelete, onUpdate }) {
               </div>
             )}
 
+            {/* Tab: ATS Scanner */}
+            {activeTab === 'ats scanner' && (
+              <div>
+                {!atsResult ? (
+                  <>
+                    <p style={{ margin: '0 0 14px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+                      Upload your resume PDF and AI will score it against this job description, find missing keywords, and rewrite weak bullets.
+                    </p>
+
+                    {/* Drop zone */}
+                    <div
+                      onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                      onDragLeave={() => setDragOver(false)}
+                      onDrop={e => {
+                        e.preventDefault();
+                        setDragOver(false);
+                        const file = e.dataTransfer.files[0];
+                        if (file?.type === 'application/pdf') setResumeFile(file);
+                        else setAtsError('Only PDF files are accepted');
+                      }}
+                      onClick={() => document.getElementById(`resume-upload-${job.id}`).click()}
+                      style={{
+                        border: `2px dashed ${dragOver ? '#2563eb' : '#3d3d3d'}`,
+                        borderRadius: 8, padding: '28px 16px', textAlign: 'center',
+                        cursor: 'pointer', marginBottom: 12,
+                        background: dragOver ? 'rgba(37,99,235,0.05)' : 'transparent',
+                        transition: 'all 0.15s'
+                      }}>
+                      <input
+                        id={`resume-upload-${job.id}`}
+                        type="file"
+                        accept=".pdf"
+                        style={{ display: 'none' }}
+                        onChange={e => {
+                          const file = e.target.files[0];
+                          if (file) { setResumeFile(file); setAtsError(''); }
+                        }}
+                      />
+                      {resumeFile ? (
+                        <div>
+                          <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: '#16a34a' }}>
+                            {resumeFile.name}
+                          </p>
+                          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>
+                            Click to change file
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p style={{ margin: 0, fontSize: 14, color: '#9ca3af' }}>
+                            Drop your resume PDF here
+                          </p>
+                          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>
+                            or click to browse — max 5MB
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {atsError && <p style={{ fontSize: 13, color: '#dc2626', marginBottom: 10 }}>{atsError}</p>}
+
+                    <button
+                      onClick={handleResumeScore}
+                      disabled={atsLoading || !resumeFile}
+                      style={{
+                        width: '100%', padding: 10, borderRadius: 6,
+                        background: atsLoading || !resumeFile ? '#374151' : '#2563eb',
+                        color: atsLoading || !resumeFile ? '#6b7280' : 'white',
+                        border: 'none', cursor: atsLoading || !resumeFile ? 'not-allowed' : 'pointer',
+                        fontSize: 14, transition: 'all 0.15s'
+                      }}>
+                      {atsLoading ? 'Analysing resume...' : 'Score my resume'}
+                    </button>
+                  </>
+                ) : (
+                  <div>
+                    {/* Score header */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 16,
+                      background: '#111827', borderRadius: 10, padding: '16px 18px', marginBottom: 14
+                    }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ margin: 0, fontSize: 36, fontWeight: 700, color: atsResult.ats_score >= 70 ? '#16a34a' : atsResult.ats_score >= 50 ? '#d97706' : '#dc2626' }}>
+                          {atsResult.ats_score}
+                        </p>
+                        <p style={{ margin: 0, fontSize: 11, color: '#6b7280' }}>ATS score</p>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: '0 0 4px', fontSize: 13, color: '#9ca3af' }}>{atsResult.verdict}</p>
+                        <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>
+                          {atsResult.pages} page resume · {Math.round(atsResult.resume_length / 5)} words estimated
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Top tip */}
+                    <div style={{
+                      background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)',
+                      borderRadius: 8, padding: '10px 14px', marginBottom: 14
+                    }}>
+                      <p style={{ margin: '0 0 3px', fontSize: 11, fontWeight: 500, color: '#2563eb' }}>TOP TIP</p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#d1d5db', lineHeight: 1.5 }}>{atsResult.top_tip}</p>
+                    </div>
+
+                    {/* Keywords side by side */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                      <div style={{ background: '#111827', borderRadius: 8, padding: 12 }}>
+                        <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: '#16a34a' }}>Matched keywords</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {atsResult.matched_keywords?.map(kw => (
+                            <span key={kw} style={{
+                              fontSize: 11, padding: '2px 8px', borderRadius: 20,
+                              background: 'rgba(22,163,74,0.15)', color: '#16a34a',
+                              border: '1px solid rgba(22,163,74,0.2)'
+                            }}>{kw}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ background: '#111827', borderRadius: 8, padding: 12 }}>
+                        <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: '#dc2626' }}>Missing keywords</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {atsResult.missing_keywords?.map(kw => (
+                            <span key={kw} style={{
+                              fontSize: 11, padding: '2px 8px', borderRadius: 20,
+                              background: 'rgba(220,38,38,0.15)', color: '#dc2626',
+                              border: '1px solid rgba(220,38,38,0.2)'
+                            }}>{kw}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gap analysis */}
+                    <div style={{ marginBottom: 14 }}>
+                      <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 500, color: 'white' }}>Gap analysis</p>
+                      {atsResult.gap_analysis?.map((gap, i) => (
+                        <div key={i} style={{
+                          display: 'flex', gap: 10, alignItems: 'flex-start',
+                          padding: '8px 0', borderBottom: i < atsResult.gap_analysis.length - 1 ? '1px solid #2d2d2d' : 'none'
+                        }}>
+                          <span style={{
+                            fontSize: 10, fontWeight: 500, padding: '2px 7px', borderRadius: 20,
+                            background: gap.status === 'strong' ? 'rgba(22,163,74,0.15)' : gap.status === 'weak' ? 'rgba(217,119,6,0.15)' : 'rgba(220,38,38,0.15)',
+                            color: gap.status === 'strong' ? '#16a34a' : gap.status === 'weak' ? '#d97706' : '#dc2626',
+                            whiteSpace: 'nowrap', marginTop: 1
+                          }}>{gap.status}</span>
+                          <div>
+                            <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'white' }}>{gap.area}</p>
+                            <p style={{ margin: '2px 0 0', fontSize: 12, color: '#9ca3af' }}>{gap.suggestion}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Bullet rewrites */}
+                    <div style={{ marginBottom: 14 }}>
+                      <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 500, color: 'white' }}>Bullet rewrites</p>
+                      {atsResult.bullet_rewrites?.map((b, i) => (
+                        <div key={i} style={{
+                          background: '#111827', borderRadius: 8, padding: 12, marginBottom: 8
+                        }}>
+                          <p style={{ margin: '0 0 6px', fontSize: 11, color: '#6b7280', textDecoration: 'line-through' }}>{b.original}</p>
+                          <p style={{ margin: 0, fontSize: 12, color: '#16a34a', lineHeight: 1.5 }}>{b.improved}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => { setAtsResult(null); setResumeFile(null); }}
+                      style={{
+                        width: '100%', padding: 9, borderRadius: 6,
+                        background: 'transparent', border: '1px solid #3d3d3d',
+                        color: '#9ca3af', cursor: 'pointer', fontSize: 13
+                      }}>
+                      Scan again with different resume
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Tab: Interview prep */}
             {activeTab === 'interview prep' && (
               <div>
@@ -473,6 +676,8 @@ export default function JobCard({ job, onDelete, onUpdate }) {
                 )}
               </div>
             )}
+
+
 
           </div>
         </div>

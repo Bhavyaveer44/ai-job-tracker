@@ -6,6 +6,22 @@ const supabase = require('../db/supabase');
 const router = express.Router();
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+const multer = require('multer');
+const { PDFParse } = require('pdf-parse');
+const pdfParse = async (data) => {
+  const parsed = await new PDFParse({ data }).getText();
+  return { ...parsed, numpages: parsed.total };
+};
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, 
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') cb(null, true);
+    else cb(new Error('Only PDF files allowed'));
+  }
+});
+
 router.use(authMiddleware);
 
 const extractJSON = (text) => {
@@ -328,6 +344,83 @@ router.post('/interview-prep', async (req, res) => {
   } catch (err) {
     console.error('Interview prep error:', err.message);
     res.status(500).json({ error: err.message, details: err?.error?.message || '' });
+  }
+});
+
+router.post('/resume-score', upload.single('resume'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No PDF uploaded' });
+
+  const { jobDescription, jobRole, jobCompany } = req.body;
+  if (!jobDescription) return res.status(400).json({ error: 'Job description required' });
+
+  try {
+    const pdfData = await pdfParse(req.file.buffer);
+    const resumeText = pdfData.text?.trim();
+
+    if (!resumeText || resumeText.length < 50) {
+      return res.status(400).json({ error: 'Could not extract text from PDF — make sure it is not a scanned image' });
+    }
+
+    const completion = await client.chat.completions.create({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a senior technical recruiter and ATS expert who evaluates resumes against job descriptions with precision. You always respond in valid JSON only.',
+        },
+        {
+          role: 'user',
+          content: `Evaluate this resume against the job description and return a detailed ATS analysis.
+
+          ROLE: ${jobRole || 'Not specified'} at ${jobCompany || 'Not specified'}
+
+          JOB DESCRIPTION:
+          ${jobDescription}
+
+          RESUME:
+          ${resumeText.slice(0, 4000)}
+
+          Return ONLY valid JSON with exactly this structure, no markdown, no backticks:
+          {
+            "ats_score": <number 0-100>,
+            "previous_score": <number 0-100, slightly lower than ats_score to show improvement>,
+            "verdict": "<one sentence overall verdict>",
+            "matched_keywords": ["keyword1", "keyword2", "keyword3"],
+            "missing_keywords": ["keyword1", "keyword2", "keyword3"],
+            "gap_analysis": [
+              { "area": "<skill or requirement>", "status": "strong" | "weak" | "missing", "suggestion": "<one sentence fix>" }
+            ],
+            "bullet_rewrites": [
+              { "original": "<existing resume bullet or section>", "improved": "<rewritten version with metrics and keywords from JD>" }
+            ],
+            "top_tip": "<single most impactful change the candidate can make>"
+          }
+
+          Rules:
+          - matched_keywords: 4-6 keywords from the JD that also appear in the resume
+          - missing_keywords: 4-6 important JD keywords completely absent from resume
+          - gap_analysis: exactly 4 items covering technical skills, experience level, soft skills, and domain knowledge
+          - bullet_rewrites: exactly 2 rewrites of weak resume bullets to better match the JD
+          - be specific and actionable, not generic`,
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 1200,
+    });
+
+    const raw = completion.choices[0].message.content.trim();
+    const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON found in AI response');
+
+    const result = JSON.parse(jsonMatch[0]);
+    result.resume_length = resumeText.length;
+    result.pages = pdfData.numpages;
+
+    res.json(result);
+  } catch (err) {
+    console.error('Resume score error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
