@@ -254,7 +254,7 @@ export default function Board() {
           label="Interview Rate"
           value={`${interviewRate}%`}
           color={
-            interviewRate >= 20
+            interviewRate >= 35
               ? '#16a34a'
               : '#d97706'
           }
@@ -263,7 +263,11 @@ export default function Board() {
         <StatCard
           label="Offers"
           value={offers}
-          color="#16a34a"
+          color={
+            offers >=2
+            ? '#16a34a'
+            : '#d97706'
+          }
         />
       </div>
 
