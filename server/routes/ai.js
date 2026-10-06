@@ -1,10 +1,13 @@
 const express = require('express');
-const Groq = require('groq-sdk');
+const OpenAI = require('openai');
 const authMiddleware = require('../middleware/auth');
 const supabase = require('../db/supabase');
 
 const router = express.Router();
-const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const client = new OpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
+});
 
 const multer = require('multer');
 const { PDFParse } = require('pdf-parse');
@@ -37,7 +40,7 @@ router.post('/parse', async (req, res) => {
 
   try {
     const completion = await client.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: [
         {
           role: 'user',
@@ -73,7 +76,7 @@ router.post('/match', async (req, res) => {
 
   try {
     const completion = await client.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: [
         {
           role: 'user',
@@ -115,7 +118,7 @@ router.post('/cover-letter', async (req, res) => {
 
   try {
     const completion = await client.chat.completions.create({
-  model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+  model: 'openai/gpt-oss-120b',
   messages: [
     {
       role: 'system',
@@ -174,10 +177,15 @@ router.post('/cover-letter', async (req, res) => {
     max_tokens: 500,
   });
 
-    const coverLetter = completion.choices[0].message.content.trim();
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('AI returned no content');
+    }
+    const coverLetter = content.trim();
     res.json({ coverLetter });
   } catch (err) {
     console.error('Cover letter error:', err.message);
+    console.error('Full error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -191,7 +199,7 @@ router.post('/interview-prep', async (req, res) => {
     const varietyHint = seed ? `Request #${seed % 1000} - ` : '';
     
     const completion = await client.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: [
         {
           role: 'system',
@@ -236,70 +244,18 @@ router.post('/interview-prep', async (req, res) => {
       .replace(/\r/g, '')
       .trim();
 
-    // Try multiple parsing strategies
-    let blocks = [];
-    
-    // Strategy 1: Split by blank lines
-    blocks = normalized.split(/\n\s*\n/);
-    
-    // Strategy 2: If no blocks, try splitting by double newlines
-    if (blocks.length < 2) {
-      blocks = normalized.split(/\n\n+/);
-    }
-    
-    // Strategy 3: If still no luck, try to find Q/A pairs anywhere in the text
-    if (blocks.length < 2) {
-      const qaPattern = /(?:Q:|Question:|\d+\.)\s*([^\n]+)(?:\n|\r)+(?:A:|Answer:|Tip:)\s*([^\n]+)/gi;
-      let match;
-      while ((match = qaPattern.exec(normalized)) !== null) {
-        if (match[1] && match[2]) {
+    // Use regex to find all Q/A pairs
+    const qaPattern = /(?:Q:|Question:|\d+\.)\s*([^\n]+)(?:\n|\r)+(?:A:|Answer:|Tip:)\s*([^\n]+)/gi;
+    let match;
+    while ((match = qaPattern.exec(normalized)) !== null) {
+      if (match[1] && match[2]) {
+        const questionText = match[1].trim();
+        const tipText = match[2].trim();
+        // Check for duplicates before adding
+        if (!questions.some(q => q.question === questionText)) {
           questions.push({
-            question: match[1].trim(),
-            tip: match[2].trim(),
-            type: 'general',
-          });
-        }
-      }
-    }
-
-    // Parse blocks if we have them
-    if (blocks.length >= 2) {
-      for (const block of blocks) {
-        const lines = block.split('\n').map(line => line.trim()).filter(Boolean);
-
-        let question = '';
-        let tip = '';
-
-        for (const line of lines) {
-          if (
-            line.startsWith('Q:') ||
-            line.startsWith('Question:') ||
-            /^\d+\./.test(line)
-          ) {
-            question = line
-              .replace(/^Q:/, '')
-              .replace(/^Question:/, '')
-              .replace(/^\d+\.\s*/, '')
-              .trim();
-          }
-
-          if (
-            line.startsWith('A:') ||
-            line.startsWith('Answer:') ||
-            line.startsWith('Tip:')
-          ) {
-            tip = line
-              .replace(/^A:/, '')
-              .replace(/^Answer:/, '')
-              .replace(/^Tip:/, '')
-              .trim();
-          }
-        }
-
-        if (question && tip) {
-          questions.push({
-            question,
-            tip,
+            question: questionText,
+            tip: tipText,
             type: 'general',
           });
         }

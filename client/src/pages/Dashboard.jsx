@@ -24,6 +24,8 @@ export default function Dashboard() {
             {[
               { label: 'Board', path: '/' },
               { label: 'Analytics', path: '/analytics' },
+              { label: 'Resume Agent', path: '/resume-agent' },
+              { label: 'Resume Vault', path: '/resume-vault' },
             ].map(({ label, path }) => (
               <button
                 key={path}

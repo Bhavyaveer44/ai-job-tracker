@@ -15,6 +15,6 @@ export const loginUser = (email, password) =>
   }).then(r => r.json());
 
 export const demoLogin = () =>
-  fetch(`${BASE}/api/auth/demo`, { 
-    method: 'POST' 
+  fetch(`${BASE}/api/auth/demo`, {
+    method: 'POST'
   }).then(r => r.json());
