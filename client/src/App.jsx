@@ -5,6 +5,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import { Toaster } from 'react-hot-toast';
 import Analytics from './pages/Analytics';
+import ResumeAgent from './pages/ResumeAgent';
+import ResumeVault from './pages/ResumeVault';
 
 function PrivateRoute({ children }) {
   const { token } = useAuth();
@@ -23,6 +25,8 @@ function AppRoutes() {
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
       <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
+      <Route path="/resume-agent" element={<PrivateRoute><ResumeAgent /></PrivateRoute>} />
+      <Route path="/resume-vault" element={<PrivateRoute><ResumeVault /></PrivateRoute>} />
     </Routes>
   );
 }
@@ -37,3 +41,6 @@ export default function App() {
     </AuthProvider>
   );
 }
+
+
+

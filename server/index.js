@@ -24,6 +24,12 @@ app.use('/api/jobs', jobRoutes);
 const aiRoutes = require('./routes/ai');
 app.use('/api/ai', aiRoutes);
 
+const resumeAgentRoutes = require('./routes/resumeAgent');
+app.use('/api/resume-agent', resumeAgentRoutes);
+
+const resumeVaultRoutes = require('./routes/resumeVault');
+app.use('/api/resume-vault', resumeVaultRoutes);
+
 //3.HEALTH CHECK/BASE ROUTE
 app.get('/', (req, res) => res.send('Server is running'));
 

@@ -1,37 +1,72 @@
 # AI-Powered Job Tracker
 
-Track your job applications with an AI assistant that auto-fills job details, scores your skill matching, generates cover letter and interview questions.
+Track job applications and use AI tools to tailor resumes, prepare for interviews, and manage application materials.
 
-## Live Demo
-[job-tracker.vercel.app](https://ai-job-tracker-dun.vercel.app/)
+## Live demo
+
+[ai-job-tracker-dun.vercel.app](https://ai-job-tracker-dun.vercel.app/)
 
 ## Features
-- Kanban board with drag and drop across Applied, Interview, Offer, Rejected
-- AI auto-fill — paste a job description and extract company, role, salary, skills instantly
-- Resume match score — compare your skills against job requirements (0–100%)
-- Generate multiple cover letters
-- Practice multiple interview questions
-- Analytics dashboard — applications timeline, status breakdown pie chart
-- JWT authentication — secure, session-persistent login
-- Full CRUD — add, edit, delete jobs with live sync to database
 
-## Tech Stack
-- Frontend: React, Vite, @hello-pangea/dnd
+- Kanban board for tracking applications across Applied, Interview, Offer, and Rejected
+- AI extraction of company, role, salary, and skills from a job description
+- Resume-to-job skill matching and ATS scoring
+- AI-generated cover letters and interview questions
+- Resume Agent that analyzes a PDF resume against a job description and iteratively rewrites sections
+- Resume Vault for saving resume versions and attaching them to jobs
+- Analytics dashboard for application trends and status breakdowns
+- JWT authentication and full job-application CRUD
+
+## Tech stack
+
+- Frontend: React, Vite, React Router
 - Backend: Node.js, Express
 - Database: PostgreSQL via Supabase
-- AI: Groq API 
-- Deploy: Vercel (frontend) + Render (backend)
+- AI: OpenRouter (`openai/gpt-oss-120b`)
+- Deployment: Vercel (frontend) and Render (backend)
 
 ## Run locally
 
-## Backend
+### Backend
+
+```sh
 cd server
 npm install
-### create .env with SUPABASE_URL, SUPABASE_SERVICE_KEY, JWT_SECRET, GROQ_API_KEY
-node index.js
+```
 
-## Frontend
+Copy `server/.env.example` to `server/.env` and set:
+
+| Variable | Description |
+| --- | --- |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_KEY` | Server-only Supabase service-role key; never expose it in the frontend |
+| `JWT_SECRET` | Secret used to sign application JWTs |
+| `OPENROUTER_API_KEY` | API key for AI features |
+| `PORT` | Optional; defaults to `5000` |
+
+Start the API:
+
+```sh
+node index.js
+```
+
+### Frontend
+
+In another terminal:
+
+```sh
 cd client
 npm install
-### create .env with VITE_API_URL=http://localhost:5000
+```
+
+Copy `client/.env.example` to `client/.env` and set the backend URL:
+
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+Start the frontend:
+
+```sh
 npm run dev
+```
