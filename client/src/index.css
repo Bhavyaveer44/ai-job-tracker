@@ -52,18 +52,21 @@
 
 body {
   margin: 0;
+  background: #0f0f1a;
+  color: #fff;
+  overflow-x: hidden;
 }
 
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  margin: 0;
+  border: none;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  text-align: left;
 }
 
 h1,
@@ -108,11 +111,4 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
-}
-
-#root:has(.login-page-container) {
-  width: 100% !important;
-  max-width: 100% !important;
-  border-inline: none !important;
-  margin: 0 !important;
 }

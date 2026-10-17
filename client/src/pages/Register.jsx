@@ -23,19 +23,31 @@ export default function Register() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 0,
-      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    }}>
+    <div 
+      className="register-page-container"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        margin: 0,
+        padding: 0,
+        zIndex: 9999,
+        background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)',
+        display: 'flex',
+        alignItems: 'stretch',
+        justifyContent: 'stretch',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        boxSizing: 'border-box',
+        overflowX: 'hidden',
+        overflowY: 'auto'
+      }}
+    >
       {/* Split Screen Container */}
       <div style={{
         width: '100%',
-        minHeight: '100vh',
+        height: '100%',
         display: 'flex',
         flexDirection: 'row'
       }}>
@@ -84,13 +96,15 @@ export default function Register() {
           }}>
             <h1 style={{
               margin: '0 0 16px',
+              paddingBottom: '8px',
               fontSize: 48,
               fontWeight: 700,
               background: 'linear-gradient(135deg, #fff 0%, #a5b4fc 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              letterSpacing: '-1px'
+              letterSpacing: '-1px',
+              lineHeight: 1.2
             }}>
               Job Tracker
             </h1>
@@ -103,53 +117,6 @@ export default function Register() {
             }}>
               Start tracking your job applications with AI-powered insights
             </p>
-            <div style={{
-              display: 'flex',
-              gap: 24,
-              justifyContent: 'center',
-              marginTop: 32
-            }}>
-              <div style={{
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  fontSize: 32,
-                  fontWeight: 700,
-                  color: '#818cf8',
-                  marginBottom: 4
-                }}>
-                  Free
-                </div>
-                <div style={{
-                  fontSize: 13,
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px'
-                }}>
-                  Forever
-                </div>
-              </div>
-              <div style={{
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  fontSize: 32,
-                  fontWeight: 700,
-                  color: '#a78bfa',
-                  marginBottom: 4
-                }}>
-                  AI
-                </div>
-                <div style={{
-                  fontSize: 13,
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px'
-                }}>
-                  Powered
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -163,7 +130,8 @@ export default function Register() {
           padding: '60px',
           background: 'rgba(255, 255, 255, 0.02)',
           backdropFilter: 'blur(20px)',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.1)'
+          borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+          overflowY: 'auto'
         }}>
           <div style={{
             width: '100%',
@@ -220,14 +188,14 @@ export default function Register() {
                     backdropFilter: 'blur(10px)'
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = 'rgba(99, 102, 241, 0.5)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.08)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                    e.target.style.boxShadow = 'none';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
               </div>
@@ -262,14 +230,14 @@ export default function Register() {
                     backdropFilter: 'blur(10px)'
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = 'rgba(99, 102, 241, 0.5)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.08)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                    e.target.style.boxShadow = 'none';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
               </div>
@@ -315,13 +283,13 @@ export default function Register() {
                 }}
                 onMouseEnter={(e) => {
                   if (!loading) {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 8px 30px rgba(99, 102, 241, 0.5)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(99, 102, 241, 0.5)';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.4)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.4)';
                 }}
               >
                 {loading ? 'Creating account...' : 'Create account'}
@@ -344,10 +312,10 @@ export default function Register() {
                   transition: 'color 0.2s'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.color = '#a5b4fc';
+                  e.currentTarget.style.color = '#a5b4fc';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.color = '#818cf8';
+                  e.currentTarget.style.color = '#818cf8';
                 }}
               >
                 Sign in
@@ -357,8 +325,14 @@ export default function Register() {
         </div>
       </div>
 
-      {/* CSS Animations */}
+      {/* CSS Animations & Global Override */}
       <style>{`
+        #root:has(.register-page-container) {
+          width: 100% !important;
+          max-width: 100% !important;
+          border-inline: none !important;
+          margin: 0 !important;
+        }
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-20px) rotate(5deg); }

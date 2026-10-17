@@ -51,7 +51,8 @@ export default function Login() {
         justifyContent: 'stretch',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         boxSizing: 'border-box',
-        overflowX: 'hidden'
+        overflowX: 'hidden',
+        overflowY: 'auto'
       }}
     >
       {/* Split Screen Container */}
@@ -198,7 +199,7 @@ export default function Login() {
                 e.currentTarget.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.15)';
               }}
             >
-              {demoLoading ? 'Loading demo...' : 'Try demo — no sign up needed'}
+              {demoLoading ? 'Loading demo...' : 'Try demo - no sign up needed'}
             </button>
 
             {/* Divider */}

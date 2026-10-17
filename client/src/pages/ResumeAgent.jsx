@@ -1,29 +1,29 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { saveVersion } from '../api/resumeVault';
 import { wordDiff } from '../utils/diff';
 import toast from 'react-hot-toast';
 
 const SCORE_COLOR = (s) =>
-  s >= 70 ? '#16a34a' : s >= 50 ? '#d97706' : '#dc2626';
+  s >= 70 ? '#a78bfa' : s >= 50 ? '#8b5cf6' : '#c4b5fd';
 
 function DiffView({ before, after }) {
   const parts = wordDiff(before, after);
   return (
-    <p style={{ fontSize: 12, lineHeight: 1.8, color: '#d1d5db', margin: 0 }}>
+    <p style={{ fontSize: 12, lineHeight: 1.8, color: 'rgba(255, 255, 255, 0.7)', margin: 0 }}>
       {parts.map((p, i) => {
         if (p.type === 'same') return <span key={i}>{p.text}</span>;
         if (p.type === 'added') return (
           <span key={i} style={{
-            background: 'rgba(22,163,74,0.2)', color: '#16a34a',
-            borderRadius: 2, padding: '0 2px'
+            background: 'rgba(167, 139, 250, 0.2)', color: '#a78bfa',
+            borderRadius: 3, padding: '0 3px'
           }}>{p.text}</span>
         );
         return (
           <span key={i} style={{
-            background: 'rgba(220,38,38,0.2)', color: '#dc2626',
-            textDecoration: 'line-through', borderRadius: 2, padding: '0 2px'
+            background: 'rgba(196, 181, 253, 0.2)', color: '#c4b5fd',
+            textDecoration: 'line-through', borderRadius: 3, padding: '0 3px'
           }}>{p.text}</span>
         );
       })}
@@ -37,51 +37,94 @@ function IterationCard({ iter }) {
 
   return (
     <div style={{
-      background: '#1e1e1e', borderRadius: 10,
-      border: '1px solid #2d2d2d', padding: 16, marginBottom: 12
+      background: 'rgba(255, 255, 255, 0.03)',
+      backdropFilter: 'blur(10px)',
+      borderRadius: 12,
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      padding: 20,
+      marginBottom: 16,
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
         <div style={{
-          background: '#2a2a2a', borderRadius: 8, padding: '6px 12px',
-          display: 'flex', alignItems: 'center', gap: 8
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: 10,
+          padding: '8px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          backdropFilter: 'blur(10px)'
         }}>
-          <span style={{ fontSize: 12, color: '#6b7280' }}>Iteration {iter.iteration}</span>
-          <span style={{ fontSize: 18, fontWeight: 700, color: SCORE_COLOR(iter.score_before) }}>
+          <span style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', fontWeight: 500 }}>
+            Iteration {iter.iteration}
+          </span>
+          <span style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: SCORE_COLOR(iter.score_before),
+            letterSpacing: '-0.5px'
+          }}>
             {iter.score_before}
           </span>
-          <span style={{ fontSize: 14, color: '#4b5563' }}>→</span>
-          <span style={{ fontSize: 18, fontWeight: 700, color: SCORE_COLOR(iter.score_after) }}>
+          <span style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.3)' }}>→</span>
+          <span style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: SCORE_COLOR(iter.score_after),
+            letterSpacing: '-0.5px'
+          }}>
             {iter.score_after}
           </span>
           <span style={{
-            fontSize: 12, fontWeight: 500,
-            color: improved > 0 ? '#16a34a' : '#dc2626'
+            fontSize: 12,
+            fontWeight: 600,
+            color: improved > 0 ? '#a78bfa' : '#c4b5fd'
           }}>
             {improved > 0 ? `+${improved}` : improved}
           </span>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'white' }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#fff' }}>
             Rewrote: {iter.weakest_section}
           </p>
-          <p style={{ margin: '2px 0 0', fontSize: 12, color: '#9ca3af' }}>{iter.reason}</p>
+          <p style={{ margin: '2px 0 0', fontSize: 13, color: 'rgba(255, 255, 255, 0.5)' }}>{iter.reason}</p>
         </div>
       </div>
 
       <button
         onClick={() => setShowDiff(v => !v)}
         style={{
-          fontSize: 12, padding: '4px 12px', borderRadius: 6,
-          background: 'transparent', border: '1px solid #3d3d3d',
-          color: '#9ca3af', cursor: 'pointer', marginBottom: showDiff ? 10 : 0
-        }}>
+          fontSize: 12,
+          padding: '6px 14px',
+          borderRadius: 8,
+          background: 'transparent',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          color: 'rgba(255, 255, 255, 0.6)',
+          cursor: 'pointer',
+          marginBottom: showDiff ? 12 : 0,
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+          e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.background = 'transparent';
+          e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+        }}
+      >
         {showDiff ? 'Hide diff' : 'Show word diff'}
       </button>
 
       {showDiff && (
         <div style={{
-          background: '#111', borderRadius: 8, padding: 12,
-          maxHeight: 240, overflowY: 'auto', marginTop: 8
+          background: 'rgba(0, 0, 0, 0.3)',
+          borderRadius: 10,
+          padding: 16,
+          maxHeight: 280,
+          overflowY: 'auto',
+          marginTop: 12,
+          border: '1px solid rgba(255, 255, 255, 0.05)'
         }}>
           <DiffView before={iter.resume_before} after={iter.resume_after} />
         </div>
@@ -93,6 +136,7 @@ function IterationCard({ iter }) {
 export default function ResumeAgent() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [resumeFile, setResumeFile] = useState(null);
   const [jobDescription, setJobDescription] = useState('');
@@ -196,16 +240,38 @@ export default function ResumeAgent() {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
 
       {/* Navbar */}
       <div style={{
-        background: '#1a1a1a', borderBottom: '1px solid #2d2d2d',
-        padding: '14px 24px', display: 'flex',
-        justifyContent: 'space-between', alignItems: 'center'
+        background: 'rgba(15, 15, 26, 0.8)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        padding: '16px 32px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'white' }}>Job Tracker</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+          <h2 style={{
+            margin: 0,
+            fontSize: 22,
+            fontWeight: 700,
+            background: 'linear-gradient(135deg, #fff 0%, #a5b4fc 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            letterSpacing: '-0.5px'
+          }}>
+            Job Tracker
+          </h2>
           <nav style={{ display: 'flex', gap: 4 }}>
             {[
               { label: 'Board', path: '/' },
@@ -213,40 +279,115 @@ export default function ResumeAgent() {
               { label: 'Resume Agent', path: '/resume-agent' },
               { label: 'Resume Vault', path: '/resume-vault' },
             ].map(({ label, path }) => (
-              <button key={path} onClick={() => navigate(path)} style={{
-                padding: '7px 14px', borderRadius: 8, border: 'none',
-                background: location.pathname === path ? '#2563eb' : 'transparent',
-                color: location.pathname === path ? 'white' : '#9ca3af',
-                cursor: 'pointer', fontSize: 13,
-                fontWeight: location.pathname === path ? 600 : 400,
-              }}>{label}</button>
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: location.pathname === path
+                    ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)'
+                    : 'transparent',
+                  color: location.pathname === path ? '#a5b4fc' : 'rgba(255, 255, 255, 0.6)',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: location.pathname === path ? 600 : 500,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  backdropFilter: 'blur(10px)'
+                }}
+                onMouseEnter={(e) => {
+                  if (location.pathname !== path) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.target.style.color = 'rgba(255, 255, 255, 0.9)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (location.pathname !== path) {
+                    e.target.style.background = 'transparent';
+                    e.target.style.color = 'rgba(255, 255, 255, 0.6)';
+                  }
+                }}
+              >
+                {label}
+              </button>
             ))}
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ fontSize: 14, color: '#9ca3af' }}>{user?.email}</span>
-          <button onClick={handleLogout} style={{
-            padding: '7px 16px', borderRadius: 8, border: '1px solid #3d3d3d',
-            cursor: 'pointer', fontSize: 14, background: 'transparent', color: 'white'
-          }}>Log out</button>
+          <span style={{
+            fontSize: 14,
+            color: 'rgba(255, 255, 255, 0.6)',
+            fontWeight: 500
+          }}>
+            {user?.email}
+          </span>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              cursor: 'pointer',
+              fontSize: 14,
+              background: 'rgba(255, 255, 255, 0.05)',
+              color: 'rgba(255, 255, 255, 0.9)',
+              fontWeight: 500,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              backdropFilter: 'blur(10px)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+              e.target.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+              e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+              e.target.style.transform = 'translateY(0)';
+            }}
+          >
+            Log out
+          </button>
         </div>
       </div>
 
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: 24 }}>
-        <div style={{ marginBottom: 24 }}>
-          <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700, color: 'white' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: 32 }}>
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{
+            margin: '0 0 8px',
+            fontSize: 32,
+            fontWeight: 700,
+            color: '#fff',
+            letterSpacing: '-0.5px'
+          }}>
             Resume Agent
           </h2>
-          <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>
+          <p style={{
+            margin: 0,
+            fontSize: 15,
+            color: 'rgba(255, 255, 255, 0.5)'
+          }}>
             AI iteratively rewrites your resume until it scores 80+ against the job description
           </p>
         </div>
 
         {/* Input area */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 24,
+          marginBottom: 24
+        }}>
           {/* PDF upload */}
           <div>
-            <label style={{ display: 'block', fontSize: 13, color: '#9ca3af', marginBottom: 8 }}>
+            <label style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'rgba(255, 255, 255, 0.7)',
+              marginBottom: 8,
+              fontWeight: 500
+            }}>
               Your resume (PDF)
             </label>
             <div
@@ -260,26 +401,52 @@ export default function ResumeAgent() {
               }}
               onClick={() => fileRef.current.click()}
               style={{
-                border: `2px dashed ${dragOver ? '#2563eb' : '#3d3d3d'}`,
-                borderRadius: 10, padding: '28px 16px', textAlign: 'center',
-                cursor: 'pointer', background: dragOver ? 'rgba(37,99,235,0.06)' : '#1e1e1e',
-                transition: 'all 0.15s', height: 140,
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center'
+                border: `2px dashed ${dragOver ? '#6366f1' : 'rgba(255, 255, 255, 0.15)'}`,
+                borderRadius: 12,
+                padding: '32px 20px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: dragOver
+                  ? 'rgba(99, 102, 241, 0.1)'
+                  : 'rgba(255, 255, 255, 0.03)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                height: 160,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backdropFilter: 'blur(10px)'
               }}>
               <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }}
                 onChange={e => { if (e.target.files[0]) setResumeFile(e.target.files[0]); }} />
               {resumeFile ? (
                 <>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: '#16a34a' }}>
+                  <p style={{
+                    margin: 0,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#a78bfa'
+                  }}>
                     {resumeFile.name}
                   </p>
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>Click to change</p>
+                  <p style={{
+                    margin: '4px 0 0',
+                    fontSize: 12,
+                    color: 'rgba(255, 255, 255, 0.4)'
+                  }}>Click to change</p>
                 </>
               ) : (
                 <>
-                  <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>Drop resume PDF here</p>
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#4b5563' }}>or click to browse</p>
+                  <p style={{
+                    margin: 0,
+                    fontSize: 14,
+                    color: 'rgba(255, 255, 255, 0.5)'
+                  }}>Drop resume PDF here</p>
+                  <p style={{
+                    margin: '4px 0 0',
+                    fontSize: 12,
+                    color: 'rgba(255, 255, 255, 0.3)'
+                  }}>or click to browse</p>
                 </>
               )}
             </div>
@@ -287,7 +454,13 @@ export default function ResumeAgent() {
 
           {/* JD input */}
           <div>
-            <label style={{ display: 'block', fontSize: 13, color: '#9ca3af', marginBottom: 8 }}>
+            <label style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'rgba(255, 255, 255, 0.7)',
+              marginBottom: 8,
+              fontWeight: 500
+            }}>
               Job description
             </label>
             <textarea
@@ -295,10 +468,28 @@ export default function ResumeAgent() {
               onChange={e => setJobDescription(e.target.value)}
               placeholder="Paste the full job description here..."
               style={{
-                width: '100%', height: 140, padding: 12, boxSizing: 'border-box',
-                borderRadius: 10, border: '1px solid #3d3d3d',
-                background: '#1e1e1e', color: 'white', fontSize: 13,
-                resize: 'none', outline: 'none', lineHeight: 1.5
+                width: '100%',
+                height: 160,
+                padding: 14,
+                boxSizing: 'border-box',
+                borderRadius: 12,
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.03)',
+                color: '#fff',
+                fontSize: 14,
+                resize: 'none',
+                outline: 'none',
+                lineHeight: 1.6,
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.03)';
               }}
             />
           </div>
@@ -308,27 +499,58 @@ export default function ResumeAgent() {
           onClick={handleRun}
           disabled={running}
           style={{
-            width: '100%', padding: 12, borderRadius: 8,
-            background: running ? '#1e3a5f' : '#2563eb',
-            color: running ? '#60a5fa' : 'white',
-            border: 'none', cursor: running ? 'not-allowed' : 'pointer',
-            fontSize: 15, fontWeight: 600, marginBottom: 28, transition: 'all 0.15s'
-          }}>
+            width: '100%',
+            padding: '14px 20px',
+            borderRadius: 12,
+            background: running
+              ? 'rgba(99, 102, 241, 0.5)'
+              : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+            color: running ? 'rgba(255, 255, 255, 0.7)' : '#fff',
+            border: 'none',
+            cursor: running ? 'not-allowed' : 'pointer',
+            fontSize: 15,
+            fontWeight: 600,
+            marginBottom: 32,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: running
+              ? 'none'
+              : '0 4px 20px rgba(99, 102, 241, 0.4)'
+          }}
+          onMouseEnter={(e) => {
+            if (!running) {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 8px 30px rgba(99, 102, 241, 0.5)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.4)';
+          }}
+        >
           {running ? 'Agent is running...' : 'Run Resume Agent'}
         </button>
 
         {/* Live iteration log */}
         {(iterations.length > 0 || running) && (
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: 'white' }}>
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: 18,
+                fontWeight: 600,
+                color: '#fff'
+              }}>
                 Agent log
               </h3>
               {running && (
                 <span style={{
-                  fontSize: 12, padding: '2px 10px', borderRadius: 20,
-                  background: 'rgba(37,99,235,0.15)', color: '#60a5fa',
-                  border: '1px solid rgba(37,99,235,0.2)'
+                  fontSize: 12,
+                  padding: '4px 12px',
+                  borderRadius: 20,
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  color: '#a5b4fc',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  fontWeight: 500
                 }}>Running...</span>
               )}
             </div>
@@ -341,57 +563,153 @@ export default function ResumeAgent() {
         {/* Final summary */}
         {finalResult && (
           <div style={{
-            background: '#1e1e1e', borderRadius: 12,
-            border: '1px solid #2d2d2d', padding: 20
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 16,
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            padding: 28
           }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 500, color: 'white' }}>
+            <h3 style={{
+              margin: '0 0 24px',
+              fontSize: 18,
+              fontWeight: 600,
+              color: '#fff'
+            }}>
               Final result
             </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16 }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 24,
+              marginBottom: 24
+            }}>
               <div style={{ textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: 11, color: '#6b7280' }}>Start score</p>
-                <p style={{ margin: 0, fontSize: 32, fontWeight: 700, color: SCORE_COLOR(finalResult.start_score) }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: 12,
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>Start score</p>
+                <p style={{
+                  margin: 0,
+                  fontSize: 36,
+                  fontWeight: 700,
+                  color: SCORE_COLOR(finalResult.start_score),
+                  letterSpacing: '-1px'
+                }}>
                   {finalResult.start_score}
                 </p>
               </div>
-              <div style={{ fontSize: 20, color: '#4b5563' }}>→</div>
+              <div style={{
+                fontSize: 24,
+                color: 'rgba(255, 255, 255, 0.2)'
+              }}>→</div>
               <div style={{ textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: 11, color: '#6b7280' }}>Final score</p>
-                <p style={{ margin: 0, fontSize: 32, fontWeight: 700, color: SCORE_COLOR(finalResult.final_score) }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: 12,
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>Final score</p>
+                <p style={{
+                  margin: 0,
+                  fontSize: 36,
+                  fontWeight: 700,
+                  color: SCORE_COLOR(finalResult.final_score),
+                  letterSpacing: '-1px'
+                }}>
                   {finalResult.final_score}
                 </p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: 11, color: '#6b7280' }}>Improvement</p>
-                <p style={{ margin: 0, fontSize: 32, fontWeight: 700, color: '#16a34a' }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: 12,
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>Improvement</p>
+                <p style={{
+                  margin: 0,
+                  fontSize: 36,
+                  fontWeight: 700,
+                  color: '#a78bfa',
+                  letterSpacing: '-1px'
+                }}>
                   +{finalResult.final_score - finalResult.start_score}
                 </p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: 11, color: '#6b7280' }}>Iterations</p>
-                <p style={{ margin: 0, fontSize: 32, fontWeight: 700, color: '#2563eb' }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: 12,
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>Iterations</p>
+                <p style={{
+                  margin: 0,
+                  fontSize: 36,
+                  fontWeight: 700,
+                  color: '#6366f1',
+                  letterSpacing: '-1px'
+                }}>
                   {finalResult.total_iterations}
                 </p>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 12 }}>
               <button
                 onClick={() => setShowSaveModal(true)}
                 style={{
-                  flex: 1, padding: 10, borderRadius: 8,
-                  background: '#2563eb', color: 'white',
-                  border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500
-                }}>
+                  flex: 1,
+                  padding: '12px 20px',
+                  borderRadius: 10,
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 4px 20px rgba(99, 102, 241, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 8px 30px rgba(99, 102, 241, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.3)';
+                }}
+              >
                 Save as Resume Version
               </button>
               <button
                 onClick={() => navigate('/resume-vault')}
                 style={{
-                  padding: '10px 18px', borderRadius: 8,
-                  background: 'transparent', border: '1px solid #3d3d3d',
-                  color: '#9ca3af', cursor: 'pointer', fontSize: 14
-                }}>
+                  padding: '12px 20px',
+                  borderRadius: 10,
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'transparent';
+                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                }}
+              >
                 View Vault
               </button>
             </div>
@@ -402,17 +720,39 @@ export default function ResumeAgent() {
       {/* Save modal */}
       {showSaveModal && (
         <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 200
         }}>
           <div style={{
-            background: '#1e1e1e', borderRadius: 12, padding: 24,
-            width: '100%', maxWidth: 400, border: '1px solid #2d2d2d'
+            background: 'rgba(15, 15, 26, 0.95)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: 16,
+            padding: 28,
+            width: '100%',
+            maxWidth: 420,
+            border: '1px solid rgba(255, 255, 255, 0.1)'
           }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 16, color: 'white' }}>
+            <h3 style={{
+              margin: '0 0 20px',
+              fontSize: 18,
+              fontWeight: 600,
+              color: '#fff'
+            }}>
               Save to Resume Vault
             </h3>
-            <label style={{ display: 'block', fontSize: 13, color: '#9ca3af', marginBottom: 6 }}>
+            <label style={{
+              display: 'block',
+              fontSize: 13,
+              color: 'rgba(255, 255, 255, 0.7)',
+              marginBottom: 8,
+              fontWeight: 500
+            }}>
               Version name
             </label>
             <input
@@ -420,25 +760,73 @@ export default function ResumeAgent() {
               onChange={e => setVersionName(e.target.value)}
               placeholder="e.g. SWE Startups v2, PM Roles v1"
               style={{
-                width: '100%', padding: 10, boxSizing: 'border-box',
-                borderRadius: 8, border: '1px solid #3d3d3d',
-                background: '#111', color: 'white', fontSize: 14,
-                marginBottom: 16, outline: 'none'
+                width: '100%',
+                padding: 12,
+                boxSizing: 'border-box',
+                borderRadius: 10,
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#fff',
+                fontSize: 14,
+                outline: 'none',
+                marginBottom: 20,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.05)';
               }}
             />
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={handleSave} disabled={saving} style={{
-                flex: 1, padding: 10, borderRadius: 8,
-                background: '#2563eb', color: 'white',
-                border: 'none', cursor: 'pointer', fontSize: 14
-              }}>
-                {saving ? 'Saving...' : 'Save version'}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  flex: 1,
+                  padding: '12px 20px',
+                  borderRadius: 10,
+                  background: saving
+                    ? 'rgba(99, 102, 241, 0.5)'
+                    : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: saving
+                    ? 'none'
+                    : '0 4px 20px rgba(99, 102, 241, 0.3)'
+                }}
+              >
+                {saving ? 'Saving...' : 'Save'}
               </button>
-              <button onClick={() => setShowSaveModal(false)} style={{
-                padding: '10px 16px', borderRadius: 8,
-                background: 'transparent', border: '1px solid #3d3d3d',
-                color: '#9ca3af', cursor: 'pointer', fontSize: 14
-              }}>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                style={{
+                  padding: '12px 20px',
+                  borderRadius: 10,
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'transparent';
+                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                }}
+              >
                 Cancel
               </button>
             </div>

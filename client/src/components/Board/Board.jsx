@@ -16,46 +16,49 @@ const COLUMNS = [
   {
     id: 'applied',
     label: 'Applied',
-    color: '#2563eb',
-    border: '#2563eb',
+    color: '#6366f1',
+    border: '#6366f1',
   },
   {
     id: 'rejected',
     label: 'Rejected',
-    color: '#dc2626',
-    border: '#dc2626',
+    color: '#c4b5fd',
+    border: '#c4b5fd',
   },
   {
     id: 'interview',
     label: 'Interview',
-    color: '#d97706',
-    border: '#d97706',
+    color: '#8b5cf6',
+    border: '#8b5cf6',
   },
   {
     id: 'offer',
     label: 'Offer',
-    color: '#16a34a',
-    border: '#16a34a',
+    color: '#a78bfa',
+    border: '#a78bfa',
   },
 ];
 
 const StatCard = ({ label, value, color }) => (
   <div
     style={{
-      background: '#2a2a2a',
-      borderRadius: 12,
-      padding: '18px 22px',
-      border: '1px solid #3d3d3d',
+      background: 'rgba(255, 255, 255, 0.03)',
+      backdropFilter: 'blur(10px)',
+      borderRadius: 16,
+      padding: '20px 24px',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
       flex: 1,
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     }}
   >
     <p
       style={{
         margin: '0 0 8px',
         fontSize: 12,
-        color: '#6b7280',
-        letterSpacing: '0.08em',
+        color: 'rgba(255, 255, 255, 0.5)',
+        letterSpacing: '0.1em',
         textTransform: 'uppercase',
+        fontWeight: 600
       }}
     >
       {label}
@@ -64,9 +67,10 @@ const StatCard = ({ label, value, color }) => (
     <p
       style={{
         margin: 0,
-        fontSize: 32,
+        fontSize: 36,
         fontWeight: 700,
-        color: color || 'white',
+        color: color || '#fff',
+        letterSpacing: '-1px'
       }}
     >
       {value}
@@ -228,26 +232,26 @@ export default function Board() {
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: 32 }}>
       {/* Stats */}
       <div
         style={{
           display: 'flex',
-          gap: 14,
-          marginBottom: 24,
+          gap: 20,
+          marginBottom: 32,
           flexWrap: 'wrap',
         }}
       >
         <StatCard
           label="Total Applied"
           value={total}
-          color="#2563eb"
+          color="#6366f1"
         />
 
         <StatCard
           label="Interviews"
           value={interviews}
-          color="#d97706"
+          color="#8b5cf6"
         />
 
         <StatCard
@@ -255,8 +259,8 @@ export default function Board() {
           value={`${interviewRate}%`}
           color={
             interviewRate >= 35
-              ? '#16a34a'
-              : '#d97706'
+              ? '#a78bfa'
+              : '#8b5cf6'
           }
         />
 
@@ -265,19 +269,19 @@ export default function Board() {
           value={offers}
           color={
             offers >=2
-            ? '#16a34a'
-            : '#d97706'
+            ? '#a78bfa'
+            : '#8b5cf6'
           }
         />
       </div>
 
       {/* Controls */}
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 24 }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
+            gap: 12,
             flexWrap: 'wrap',
           }}
         >
@@ -289,13 +293,22 @@ export default function Board() {
             style={{
               flex: 1,
               minWidth: 220,
-              padding: '8px 14px',
-              borderRadius: 8,
-              border: '1px solid #3d3d3d',
-              background: '#2a2a2a',
-              color: 'white',
+              padding: '10px 16px',
+              borderRadius: 10,
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              color: '#fff',
               fontSize: 14,
               outline: 'none',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+              e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.target.style.background = 'rgba(255, 255, 255, 0.05)';
             }}
           />
 
@@ -305,17 +318,26 @@ export default function Board() {
               setStatusFilter(e.target.value)
             }
             style={{
-              padding: '8px 12px',
-              borderRadius: 8,
-              border: '1px solid #3d3d3d',
-              background: '#2a2a2a',
+              padding: '10px 14px',
+              borderRadius: 10,
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(255, 255, 255, 0.05)',
               color:
                 statusFilter === 'all'
-                  ? '#9ca3af'
-                  : 'white',
+                  ? 'rgba(255, 255, 255, 0.5)'
+                  : '#fff',
               fontSize: 14,
               cursor: 'pointer',
               outline: 'none',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+              e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.target.style.background = 'rgba(255, 255, 255, 0.05)';
             }}
           >
             <option value="all">All statuses</option>
@@ -332,13 +354,23 @@ export default function Board() {
                 setStatusFilter('all');
               }}
               style={{
-                padding: '8px 14px',
-                borderRadius: 8,
-                border: '1px solid #3d3d3d',
+                padding: '10px 16px',
+                borderRadius: 10,
+                border: '1px solid rgba(255, 255, 255, 0.15)',
                 background: 'transparent',
-                color: '#9ca3af',
+                color: 'rgba(255, 255, 255, 0.6)',
                 fontSize: 14,
                 cursor: 'pointer',
+                fontWeight: 500,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
               }}
             >
               Clear
@@ -348,32 +380,52 @@ export default function Board() {
           <button
             onClick={() => setShowImport(true)}
             style={{
-              padding: '9px 16px',
-              borderRadius: 8,
-              border: '1px solid #3d3d3d',
+              padding: '10px 20px',
+              borderRadius: 10,
+              border: '1px solid rgba(255, 255, 255, 0.15)',
               background: 'transparent',
-              color: '#9ca3af',
+              color: 'rgba(255, 255, 255, 0.7)',
               cursor: 'pointer',
               fontSize: 14,
+              fontWeight: 500,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+              e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+              e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
             }}
           >
-            ↑ Import CSV
+            Import CSV
           </button>
 
           <button
             onClick={() => setShowModal(true)}
             style={{
-              padding: '9px 20px',
-              background: '#2563eb',
-              color: 'white',
+              padding: '10px 20px',
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              color: '#fff',
               border: 'none',
-              borderRadius: 8,
               cursor: 'pointer',
-              fontWeight: 600,
               fontSize: 14,
+              fontWeight: 600,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 4px 20px rgba(99, 102, 241, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 8px 30px rgba(99, 102, 241, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.3)';
             }}
           >
-            + Add Job
+            + Add job
           </button>
         </div>
 
@@ -390,23 +442,24 @@ export default function Board() {
           >
             <span
               style={{
-                fontSize: 12,
-                color: '#6b7280',
+                fontSize: 13,
+                color: 'rgba(255, 255, 255, 0.5)',
+                fontWeight: 500,
               }}
             >
-              Showing {filteredJobs.length} of{' '}
-              {jobs.length} jobs
+              Showing {filteredJobs.length} of {jobs.length} jobs
             </span>
 
             {debouncedSearch && (
               <span
                 style={{
-                  fontSize: 11,
-                  padding: '2px 10px',
+                  fontSize: 12,
+                  padding: '3px 12px',
                   borderRadius: 20,
-                  background: '#1e3a5f',
-                  color: '#60a5fa',
-                  border: '1px solid #1e40af',
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  color: '#a5b4fc',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  fontWeight: 500
                 }}
               >
                 "{debouncedSearch}"
@@ -416,12 +469,13 @@ export default function Board() {
             {statusFilter !== 'all' && (
               <span
                 style={{
-                  fontSize: 11,
-                  padding: '2px 10px',
+                  fontSize: 12,
+                  padding: '3px 12px',
                   borderRadius: 20,
-                  background: '#1a2e1a',
-                  color: '#4ade80',
-                  border: '1px solid #166534',
+                  background: 'rgba(168, 85, 247, 0.15)',
+                  color: '#c4b5fd',
+                  border: '1px solid rgba(168, 85, 247, 0.3)',
+                  fontWeight: 500
                 }}
               >
                 {statusFilter}
@@ -437,7 +491,7 @@ export default function Board() {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-            gap: 16,
+            gap: 20,
             alignItems: 'start',
             overflowX: 'auto',
           }}
@@ -451,11 +505,12 @@ export default function Board() {
               <div
                 key={col.id}
                 style={{
-                  background: '#2a2a2a',
-                  borderRadius: 12,
-                  border: '1px solid #3d3d3d',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: 16,
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
                   borderTop: `3px solid ${col.border}`,
-                  padding: 14,
+                  padding: 16,
+                  boxShadow: '0 4px 24px rgba(0, 0, 0, 0.2)'
                 }}
               >
                 {/* Column Header */}
@@ -464,24 +519,25 @@ export default function Board() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
-                    marginBottom: 14,
+                    marginBottom: 16,
                   }}
                 >
                   <div
                     style={{
-                      width: 9,
-                      height: 9,
+                      width: 8,
+                      height: 8,
                       borderRadius: '50%',
                       background: col.color,
+                      boxShadow: `0 0 10px ${col.color}`
                     }}
                   />
 
                   <h3
                     style={{
                       margin: 0,
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: 600,
-                      color: 'white',
+                      color: '#fff',
                     }}
                   >
                     {col.label}
@@ -491,9 +547,11 @@ export default function Board() {
                     style={{
                       marginLeft: 'auto',
                       fontSize: 12,
-                      color: '#00ff3c',
-                      background: '#211f1f',
-                      padding: '1px 8px',
+                      fontWeight: 600,
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      padding: '2px 10px',
                       borderRadius: 20,
                     }}
                   >
@@ -509,28 +567,25 @@ export default function Board() {
                       {...provided.droppableProps}
                       style={{
                         minHeight: 200,
-                        maxHeight:
-                          'calc(100vh - 320px)',
+                        maxHeight: 'calc(100vh - 320px)',
                         overflowY: 'auto',
                         background:
                           snapshot.isDraggingOver
-                            ? '#333'
+                            ? 'rgba(99, 102, 241, 0.08)'
                             : 'transparent',
-                        borderRadius: 8,
-                        transition:
-                          'background 0.2s ease',
-                        padding: 2,
+                        borderRadius: 12,
+                        transition: 'background 0.2s ease',
+                        padding: 4,
                         scrollbarWidth: 'thin',
-                        scrollbarColor:
-                          '#3d3d3d transparent',
+                        scrollbarColor: 'rgba(255, 255, 255, 0.1) transparent',
                       }}
                     >
                       {columnJobs.length === 0 && (
                         <div
                           style={{
                             textAlign: 'center',
-                            padding: '40px 0',
-                            color: '#ffffff',
+                            padding: '48px 0',
+                            color: 'rgba(255, 255, 255, 0.35)',
                             fontSize: 13,
                           }}
                         >
