@@ -186,14 +186,14 @@ export default function JobCard({ job, onDelete, onUpdate }) {
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
         onMouseEnter={(e) => {
-          e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-          e.target.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-          e.target.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+          e.currentTarget.style.transform = 'translateY(-2px)';
         }}
         onMouseLeave={(e) => {
-          e.target.style.background = 'rgba(255, 255, 255, 0.03)';
-          e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-          e.target.style.transform = 'translateY(0)';
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+          e.currentTarget.style.transform = 'translateY(0)';
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
